@@ -76,6 +76,7 @@ class TeacherProjectSeeder extends Seeder
                     'description' => 'Group created for demo teacher project seeder',
                     'created_by' => $teacher->id,
                     'school_id' => $school->id,
+                    'class_id' => 1, // Default to first class
                     'status' => 'active',
                     'max_members' => 6,
                 ]
