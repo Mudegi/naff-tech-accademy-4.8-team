@@ -64,7 +64,7 @@
                         <div class="col-8">
                             <div class="numbers">
                                 <p class="text-sm mb-0 text-uppercase font-weight-bold">Avg Price</p>
-                                <h5 class="font-weight-bolder">${{ $packages->avg('price') ? number_format($packages->avg('price'), 0) : '0' }}</h5>
+                                <h5 class="font-weight-bolder">UGX {{ $packages->avg('price') ? number_format($packages->avg('price'), 0) : '0' }}</h5>
                             </div>
                         </div>
                         <div class="col-4 text-end">
@@ -131,7 +131,7 @@
                                     </td>
                                     <td>
                                         <div class="d-flex flex-column">
-                                            <span class="text-sm font-weight-bold">${{ number_format($package->price, 2) }}</span>
+                                            <span class="text-sm font-weight-bold">UGX {{ number_format($package->price, 0) }}</span>
                                             <small class="text-muted">{{ ucfirst($package->subscription_type) }}</small>
                                         </div>
                                     </td>

@@ -8,11 +8,6 @@ use Illuminate\Routing\Controller as BaseController;
 
 class AdminController extends BaseController
 {
-    public function __construct()
-    {
-        $this->middleware('auth');
-    }
-
     public function dashboard()
     {
         $contactMessages = ContactMessage::latest()->get();

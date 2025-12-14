@@ -9,18 +9,16 @@ use Illuminate\Support\Facades\Auth;
 
 class PermissionController extends Controller
 {
-    public function __construct()
+    private function checkSuperAdmin()
     {
-        $this->middleware(function ($request, $next) {
-            if (!Auth::user()->isSuperAdmin()) {
-                abort(403, 'Access denied. Only super administrators can manage permissions.');
-            }
-            return $next($request);
-        });
+        if (!Auth::user()->isSuperAdmin()) {
+            abort(403, 'Access denied. Only super administrators can manage permissions.');
+        }
     }
 
     public function index(Request $request)
     {
+        $this->checkSuperAdmin();
         $query = DB::table('permissions');
 
         // Search functionality
@@ -47,11 +45,13 @@ class PermissionController extends Controller
 
     public function create()
     {
+        $this->checkSuperAdmin();
         return view('admin.permissions.create');
     }
 
     public function store(Request $request)
     {
+        $this->checkSuperAdmin();
         $request->validate([
             'name' => 'required|string|max:255|unique:permissions,name',
             'description' => 'nullable|string',
@@ -68,12 +68,14 @@ class PermissionController extends Controller
 
     public function edit($id)
     {
+        $this->checkSuperAdmin();
         $permission = DB::table('permissions')->where('id', $id)->first();
         return view('admin.permissions.edit', compact('permission'));
     }
 
     public function update(Request $request, $id)
     {
+        $this->checkSuperAdmin();
         $request->validate([
             'name' => 'required|string|max:255|unique:permissions,name,' . $id,
             'description' => 'nullable|string',
@@ -88,6 +90,7 @@ class PermissionController extends Controller
 
     public function destroy($id)
     {
+        $this->checkSuperAdmin();
         DB::table('permissions')->where('id', $id)->delete();
         return redirect()->route('admin.permissions.index')->with('success', 'Permission deleted successfully.');
     }

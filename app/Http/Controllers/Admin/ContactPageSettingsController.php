@@ -9,24 +9,24 @@ use Illuminate\Support\Facades\Auth;
 
 class ContactPageSettingsController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware(function ($request, $next) {
-            if (!Auth::user()->isSuperAdmin()) {
-                abort(403, 'Access denied. Only super administrators can access contact page settings.');
-            }
-            return $next($request);
-        });
-    }
-
     public function index()
     {
+        // Check if user is super admin
+        if (!Auth::user()->isSuperAdmin()) {
+            abort(403, 'Access denied. Only super administrators can access contact page settings.');
+        }
+        
         $contactPage = ContactPage::first();
         return view('admin.settings.contact', compact('contactPage'));
     }
 
     public function update(Request $request)
     {
+        // Check if user is super admin
+        if (!Auth::user()->isSuperAdmin()) {
+            abort(403, 'Access denied. Only super administrators can access contact page settings.');
+        }
+        
         try {
             $validated = $request->validate([
                 // Meta Tags

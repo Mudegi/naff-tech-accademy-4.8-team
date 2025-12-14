@@ -11,24 +11,24 @@ use Illuminate\Support\Facades\Auth;
 
 class EasypaySettingsController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware(function ($request, $next) {
-            if (!Auth::user()->isSuperAdmin()) {
-                abort(403, 'Access denied. Only super administrators can access payment settings.');
-            }
-            return $next($request);
-        });
-    }
-
     public function index()
     {
+        // Check if user is super admin
+        if (!Auth::user()->isSuperAdmin()) {
+            abort(403, 'Access denied. Only super administrators can access payment settings.');
+        }
+        
         $settings = EasypayConfiguration::first();
         return view('admin.settings.easypay', compact('settings'));
     }
 
     public function update(Request $request)
     {
+        // Check if user is super admin
+        if (!Auth::user()->isSuperAdmin()) {
+            abort(403, 'Access denied. Only super administrators can access payment settings.');
+        }
+        
         try {
             DB::beginTransaction();
 

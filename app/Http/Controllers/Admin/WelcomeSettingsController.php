@@ -10,24 +10,24 @@ use Illuminate\Support\Facades\Auth;
 
 class WelcomeSettingsController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware(function ($request, $next) {
-            if (!Auth::user()->isSuperAdmin()) {
-                abort(403, 'Access denied. Only super administrators can access welcome page settings.');
-            }
-            return $next($request);
-        });
-    }
-
     public function index()
     {
+        // Check if user is super admin
+        if (!Auth::user()->isSuperAdmin()) {
+            abort(403, 'Access denied. Only super administrators can access welcome page settings.');
+        }
+        
         $welcomePage = WelcomeLink::first();
         return view('admin.settings.welcome', compact('welcomePage'));
     }
 
     public function update(Request $request)
     {
+        // Check if user is super admin
+        if (!Auth::user()->isSuperAdmin()) {
+            abort(403, 'Access denied. Only super administrators can access welcome page settings.');
+        }
+        
         try {
             // Define image fields for validation
             $imageFields = [

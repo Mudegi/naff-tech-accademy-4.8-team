@@ -11,29 +11,29 @@ use Spatie\Permission\Models\Permission;
 
 class RoleController extends Controller
 {
-    public function __construct()
+    private function checkSuperAdmin()
     {
-        $this->middleware(function ($request, $next) {
-            if (!Auth::user()->isSuperAdmin()) {
-                abort(403, 'Access denied. Only super administrators can manage roles.');
-            }
-            return $next($request);
-        });
+        if (!Auth::user()->isSuperAdmin()) {
+            abort(403, 'Access denied. Only super administrators can manage roles.');
+        }
     }
 
     public function index()
     {
+        $this->checkSuperAdmin();
         $roles = DB::table('roles')->get();
         return view('admin.roles.index', compact('roles'));
     }
 
     public function create()
     {
+        $this->checkSuperAdmin();
         return view('admin.roles.create');
     }
 
     public function store(Request $request)
     {
+        $this->checkSuperAdmin();
         $request->validate([
             'name' => 'required|string|max:255|unique:roles,name',
             'description' => 'nullable|string',
@@ -50,6 +50,7 @@ class RoleController extends Controller
 
     public function edit($id)
     {
+        $this->checkSuperAdmin();
         $role = DB::table('roles')->where('id', $id)->first();
         $permissions = DB::table('permissions')->get();
         $rolePermissions = DB::table('permission_role')->where('role_id', $id)->pluck('permission_id')->toArray();
@@ -58,6 +59,7 @@ class RoleController extends Controller
 
     public function update(Request $request, $id)
     {
+        $this->checkSuperAdmin();
         $request->validate([
             'name' => 'required|string|max:255|unique:roles,name,' . $id,
             'description' => 'nullable|string',
@@ -81,6 +83,7 @@ class RoleController extends Controller
 
     public function destroy($id)
     {
+        $this->checkSuperAdmin();
         DB::table('roles')->where('id', $id)->delete();
         return redirect()->route('admin.roles.index')->with('success', 'Role deleted successfully.');
     }

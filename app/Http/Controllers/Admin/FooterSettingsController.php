@@ -9,24 +9,24 @@ use Illuminate\Support\Facades\Auth;
 
 class FooterSettingsController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware(function ($request, $next) {
-            if (!Auth::user()->isSuperAdmin()) {
-                abort(403, 'Access denied. Only super administrators can access footer settings.');
-            }
-            return $next($request);
-        });
-    }
-
     public function index()
     {
+        // Check if user is super admin
+        if (!Auth::user()->isSuperAdmin()) {
+            abort(403, 'Access denied. Only super administrators can access footer settings.');
+        }
+        
         $footer = FooterContent::first();
         return view('admin.settings.footer', compact('footer'));
     }
 
     public function update(Request $request)
     {
+        // Check if user is super admin
+        if (!Auth::user()->isSuperAdmin()) {
+            abort(403, 'Access denied. Only super administrators can access footer settings.');
+        }
+        
         try {
             $validated = $request->validate([
                 'about_title' => 'required|string|max:255',
