@@ -77,7 +77,7 @@ class TeacherProjectSeeder extends Seeder
                     'created_by' => $teacher->id,
                     'school_id' => $school->id,
                     'class_id' => 1, // Default to first class
-                    'status' => 'active',
+                    'status' => 'open',
                     'max_members' => 6,
                 ]
             );
