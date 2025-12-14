@@ -1,20 +1,23 @@
 @extends('layouts.dashboard')
 
 @section('content')
-<div class="dashboard-content-inner">
-    <div class="dashboard-breadcrumbs" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-        <h1 class="dashboard-title" style="margin: 0;">University Cut-Offs</h1>
-        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; width: 100%;" class="action-buttons">
-            <a href="{{ route('admin.university-cut-offs.export', request()->query()) }}" class="dashboard-btn" style="background: #059669; color: white; flex: 1; min-width: 140px; text-align: center;">
-                <i class="fas fa-file-download"></i> <span class="hide-mobile-text">Export</span>
-            </a>
-            <a href="{{ route('admin.university-cut-offs.import') }}" class="dashboard-btn" style="background: #10b981; color: white; flex: 1; min-width: 140px; text-align: center;">
-                <i class="fas fa-file-upload"></i> <span class="hide-mobile-text">Import</span>
-            </a>
-            <a href="{{ route('admin.university-cut-offs.create') }}" class="dashboard-btn dashboard-btn-primary" style="flex: 1; min-width: 140px; text-align: center;">
-                <i class="fas fa-plus"></i> <span class="hide-mobile-text">Add New</span>
-            </a>
-        </div>
+<div class="dashboard-content-inner cutoffs-page">
+    <!-- Page Title -->
+    <div class="page-title-section">
+        <h1 class="dashboard-title">University Cut-Offs</h1>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="cutoffs-actions-bar">
+        <a href="{{ route('admin.university-cut-offs.export', request()->query()) }}" class="dashboard-btn export-btn">
+            <i class="fas fa-file-download"></i> <span class="btn-text">Export to Excel</span>
+        </a>
+        <a href="{{ route('admin.university-cut-offs.import') }}" class="dashboard-btn import-btn">
+            <i class="fas fa-file-upload"></i> <span class="btn-text">Import from CSV/Excel</span>
+        </a>
+        <a href="{{ route('admin.university-cut-offs.create') }}" class="dashboard-btn dashboard-btn-primary create-btn">
+            <i class="fas fa-plus"></i> <span class="btn-text">Add New Cut-Off</span>
+        </a>
     </div>
 
     @if(session('success'))
@@ -435,27 +438,148 @@
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
-/* Action Buttons Responsive */
-@media (min-width: 768px) {
-    .action-buttons {
-        width: auto !important;
+/* Page Layout */
+.cutoffs-page {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+/* Page Title Section */
+.page-title-section {
+    margin-bottom: 1rem;
+}
+
+.page-title-section .dashboard-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 0;
+}
+
+/* Action Buttons Bar */
+.cutoffs-actions-bar {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.cutoffs-actions-bar .dashboard-btn {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    border-radius: 0.5rem;
+}
+
+.export-btn {
+    background: #059669 !important;
+    color: white !important;
+    border: none !important;
+}
+
+.export-btn:hover {
+    background: #047857 !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.4);
+}
+
+.import-btn {
+    background: #10b981 !important;
+    color: white !important;
+    border: none !important;
+}
+
+.import-btn:hover {
+    background: #059669 !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.create-btn {
+    background: #667eea !important;
+    color: white !important;
+    border: none !important;
+}
+
+.create-btn:hover {
+    background: #5568d3 !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+/* Responsive Buttons */
+@media (max-width: 1200px) {
+    .cutoffs-actions-bar .dashboard-btn {
+        padding: 0.625rem 1.25rem;
+        font-size: 0.9375rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .page-title-section .dashboard-title {
+        font-size: 1.5rem;
     }
     
-    .action-buttons .dashboard-btn {
-        flex: none !important;
+    .cutoffs-actions-bar {
+        width: 100%;
+    }
+    
+    .cutoffs-actions-bar .dashboard-btn {
+        flex: 1;
+        justify-content: center;
+        min-width: 0;
     }
 }
 
 @media (max-width: 640px) {
-    .hide-mobile-text {
+    .page-title-section .dashboard-title {
+        font-size: 1.25rem;
+    }
+    
+    .cutoffs-actions-bar {
+        flex-direction: column;
+    }
+    
+    .cutoffs-actions-bar .dashboard-btn {
+        width: 100%;
+        padding: 0.875rem 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .cutoffs-actions-bar .btn-text {
         display: none;
     }
     
-    .action-buttons .dashboard-btn {
-        min-width: auto !important;
-        padding: 8px 12px;
-        font-size: 14px;
+    .cutoffs-actions-bar {
+        flex-direction: row;
+        justify-content: space-between;
     }
+    
+    .cutoffs-actions-bar .dashboard-btn {
+        flex: 1;
+        padding: 0.75rem 0.5rem;
+    }
+}
+
+/* Dashboard Content */
+.dashboard-content-inner {
+    padding: 1.5rem;
+    max-width: 100%;
+}
+
+/* Card Styling */
+.dashboard-card {
+    background: white;
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
 }
 
 /* Responsive Design */
@@ -468,16 +592,31 @@
     .dashboard-table td {
         padding: 0.75rem 0.5rem;
     }
+    
+    .dashboard-content-inner {
+        padding: 1rem;
+    }
 }
 
 @media (max-width: 768px) {
+    .dashboard-content-inner {
+        padding: 0.75rem;
+    }
+    
+    .dashboard-card {
+        padding: 1rem;
+        border-radius: 0.5rem;
+    }
+    
     .dashboard-table-container {
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
+        margin: 0 -0.75rem;
+        padding: 0 0.75rem;
     }
     
     .dashboard-table {
-        min-width: 1000px;
+        min-width: 1200px;
     }
     
     .filters-grid {
@@ -487,6 +626,7 @@
     .pagination-wrapper {
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
+        padding: 0.5rem 0;
     }
     
     .pagination-wrapper .pagination {
@@ -498,6 +638,43 @@
         min-width: 36px;
         padding: 0.5rem 0.625rem;
         font-size: 0.8125rem;
+    }
+}
+
+@media (max-width: 640px) {
+    .dashboard-alert {
+        font-size: 0.875rem;
+        padding: 0.875rem !important;
+    }
+    
+    .dashboard-alert i {
+        font-size: 1rem !important;
+    }
+    
+    .dashboard-alert strong {
+        font-size: 0.875rem !important;
+    }
+    
+    .dashboard-alert p {
+        font-size: 0.8125rem !important;
+    }
+}
+
+/* Table Scroll Indicator */
+.dashboard-table-container::after {
+    content: '← Scroll horizontally to see more →';
+    display: none;
+    text-align: center;
+    padding: 0.75rem;
+    font-size: 0.8125rem;
+    color: #6b7280;
+    font-style: italic;
+    background: linear-gradient(to bottom, transparent, #f9fafb);
+}
+
+@media (max-width: 768px) {
+    .dashboard-table-container::after {
+        display: block;
     }
 }
 </style>

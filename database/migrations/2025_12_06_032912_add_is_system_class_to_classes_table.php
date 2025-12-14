@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('classes', function (Blueprint $table) {
-            //
+            $table->boolean('is_system_class')->default(false)->after('is_active');
         });
     }
 
@@ -22,7 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('classes', function (Blueprint $table) {
-            //
+            $table->dropColumn('is_system_class');
         });
     }
 };
