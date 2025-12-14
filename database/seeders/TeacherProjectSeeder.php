@@ -101,6 +101,7 @@ class TeacherProjectSeeder extends Seeder
                     'group_id' => $group->id,
                     'created_by' => $teacher->id,
                     'school_id' => $school->id,
+                    'class_id' => 1, // Default to first class
                     'status' => 'implementation',
                     'start_date' => now()->subWeeks(2),
                     'end_date' => now()->addWeeks(2),
