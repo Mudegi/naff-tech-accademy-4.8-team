@@ -1,0 +1,511 @@
+@extends('frontend.layouts.app')
+
+@section('title', 'Naf Academy - Ugandan New Syllabus Academic Videos & Notes')
+
+@section('content')
+<style>
+    /* Hero Carousel Responsive Styles */
+    .hero-carousel {
+        position: relative;
+        height: 700px;
+        overflow: hidden;
+    }
+    
+    @media (max-width: 1024px) {
+        .hero-carousel {
+            height: 600px;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .hero-carousel {
+            height: 500px;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .hero-carousel {
+            height: 450px;
+        }
+    }
+    
+    /* Smooth Transitions */
+    .hero-carousel img {
+        transition: transform 0.3s ease;
+    }
+    
+    /* Feature Cards Hover Effect */
+    .feature-card {
+        transition: all 0.3s ease;
+        border: 1px solid transparent;
+    }
+    
+    .feature-card:hover {
+        transform: translateY(-8px);
+        border-color: #667eea;
+    }
+    
+    /* Course Cards */
+    .course-card {
+        transition: all 0.3s ease;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .course-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    /* Team Cards */
+    .team-card {
+        transition: all 0.3s ease;
+    }
+    
+    .team-card:hover {
+        transform: scale(1.05);
+    }
+    
+    /* Stats Animation */
+    .stat-number {
+        font-size: clamp(2rem, 5vw, 3rem);
+    }
+    
+    /* Responsive Typography */
+    .hero-title {
+        font-size: clamp(2rem, 5vw, 4rem);
+        line-height: 1.2;
+    }
+    
+    .hero-subtitle {
+        font-size: clamp(1rem, 2.5vw, 1.5rem);
+        line-height: 1.6;
+    }
+    
+    .section-title {
+        font-size: clamp(1.75rem, 4vw, 2.5rem);
+    }
+    
+    /* Button Styles */
+    .btn-primary {
+        padding: 1rem 2rem;
+        font-size: 1.125rem;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-primary:hover {
+        transform: scale(1.05);
+        box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+    }
+    
+    @media (max-width: 640px) {
+        .btn-primary {
+            padding: 0.875rem 1.5rem;
+            font-size: 1rem;
+            width: 100%;
+        }
+    }
+    
+    /* Icon Boxes */
+    .icon-box {
+        width: 3.5rem;
+        height: 3.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 0.75rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+    
+    /* Grid Responsive */
+    @media (max-width: 640px) {
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+        }
+        
+        .features-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .courses-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .team-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+    
+    @media (min-width: 641px) and (max-width: 1024px) {
+        .features-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .courses-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .team-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+    
+    /* Container Padding */
+    .section-container {
+        padding: 4rem 1rem;
+    }
+    
+    @media (min-width: 640px) {
+        .section-container {
+            padding: 5rem 1.5rem;
+        }
+    }
+    
+    @media (min-width: 1024px) {
+        .section-container {
+            padding: 6rem 2rem;
+        }
+    }
+    
+    /* Image Optimization */
+    .team-image {
+        width: 8rem;
+        height: 8rem;
+        object-fit: cover;
+        border-radius: 50%;
+        border: 4px solid #e0e7ff;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    @media (max-width: 640px) {
+        .team-image {
+            width: 6rem;
+            height: 6rem;
+        }
+    }
+    
+    /* Skill Tags */
+    .skill-tag {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.375rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        background-color: #e0e7ff;
+        color: #4338ca;
+        margin: 0.25rem;
+    }
+    
+    /* CTA Section */
+    .cta-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .cta-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="2" fill="white" opacity="0.1"/></svg>');
+        opacity: 0.3;
+    }
+</style>
+
+<!-- Hero Section with Image Carousel -->
+<div class="relative bg-indigo-800 overflow-hidden" x-data="{ activeSlide: 0 }" x-init="setInterval(() => { activeSlide = (activeSlide + 1) % 10 }, 5000)">
+    <div class="hero-carousel">
+        <!-- Slide 1 -->
+        <div x-show="activeSlide === 0" x-transition:enter="transition ease-out duration-1000" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-1000" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="absolute inset-0">
+            <img class="w-full h-full object-cover" src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80" alt="Students collaborating">
+            <div class="absolute inset-0 bg-indigo-900 bg-opacity-70"></div>
+        </div>
+        
+        <!-- Slide 2 -->
+        <div x-show="activeSlide === 1" x-transition:enter="transition ease-out duration-1000" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-1000" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="absolute inset-0">
+            <img class="w-full h-full object-cover" src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80" alt="Students learning">
+            <div class="absolute inset-0 bg-indigo-900 bg-opacity-70"></div>
+        </div>
+        
+        <!-- Slide 3 -->
+        <div x-show="activeSlide === 2" x-transition:enter="transition ease-out duration-1000" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-1000" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="absolute inset-0">
+            <img class="w-full h-full object-cover" src="https://images.unsplash.com/photo-1577896851231-70ef18881754?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80" alt="Modern classroom">
+            <div class="absolute inset-0 bg-indigo-900 bg-opacity-70"></div>
+        </div>
+        
+        <!-- Slide 4 -->
+        <div x-show="activeSlide === 3" x-transition:enter="transition ease-out duration-1000" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-1000" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="absolute inset-0">
+            <img class="w-full h-full object-cover" src="https://images.unsplash.com/photo-1509062522246-3755977927d7?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80" alt="Students studying">
+            <div class="absolute inset-0 bg-indigo-900 bg-opacity-70"></div>
+        </div>
+        
+        <!-- Slide 5 -->
+        <div x-show="activeSlide === 4" x-transition:enter="transition ease-out duration-1000" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-1000" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="absolute inset-0">
+            <img class="w-full h-full object-cover" src="https://images.unsplash.com/photo-1531482615713-2afd69097998?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80" alt="Students in library">
+            <div class="absolute inset-0 bg-indigo-900 bg-opacity-70"></div>
+        </div>
+        
+        <!-- Slide 6 -->
+        <div x-show="activeSlide === 5" x-transition:enter="transition ease-out duration-1000" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-1000" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="absolute inset-0">
+            <img class="w-full h-full object-cover" src="https://images.unsplash.com/photo-1571260899304-425eee4c7efc?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80" alt="Students in computer lab">
+            <div class="absolute inset-0 bg-indigo-900 bg-opacity-70"></div>
+        </div>
+        
+        <!-- Slide 7 -->
+        <div x-show="activeSlide === 6" x-transition:enter="transition ease-out duration-1000" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-1000" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="absolute inset-0">
+            <img class="w-full h-full object-cover" src="https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80" alt="Students in discussion">
+            <div class="absolute inset-0 bg-indigo-900 bg-opacity-70"></div>
+        </div>
+        
+        <!-- Slide 8 -->
+        <div x-show="activeSlide === 7" x-transition:enter="transition ease-out duration-1000" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-1000" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="absolute inset-0">
+            <img class="w-full h-full object-cover" src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80" alt="Students in group">
+            <div class="absolute inset-0 bg-indigo-900 bg-opacity-70"></div>
+        </div>
+        
+        <!-- Slide 9 -->
+        <div x-show="activeSlide === 8" x-transition:enter="transition ease-out duration-1000" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-1000" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="absolute inset-0">
+            <img class="w-full h-full object-cover" src="https://images.unsplash.com/photo-1524178232363-1fb2b075b655?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80" alt="Students in lecture">
+            <div class="absolute inset-0 bg-indigo-900 bg-opacity-70"></div>
+        </div>
+        
+        <!-- Slide 10 -->
+        <div x-show="activeSlide === 9" x-transition:enter="transition ease-out duration-1000" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-1000" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="absolute inset-0">
+            <img class="w-full h-full object-cover" src="https://images.unsplash.com/photo-1513258496099-48168024aec0?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80" alt="Students in workshop">
+            <div class="absolute inset-0 bg-indigo-900 bg-opacity-70"></div>
+        </div>
+        
+        <!-- Hero Content Overlay -->
+        <div class="absolute inset-0 flex items-center justify-center">
+            <div class="text-center px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto">
+                <h1 class="hero-title font-extrabold text-white mb-4 sm:mb-6 drop-shadow-lg">
+                    Welcome to Naf Academy
+                </h1>
+                <p class="hero-subtitle text-white mb-6 sm:mb-8 leading-relaxed max-w-3xl mx-auto drop-shadow-md">
+                    Empowering the next generation of tech leaders through quality education and hands-on learning experiences.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center max-w-md sm:max-w-none mx-auto">
+                    <a href="{{ route('register') }}" class="btn-primary bg-indigo-600 text-white font-semibold rounded-full hover:bg-indigo-700 shadow-lg text-center">
+                        Get Started
+                    </a>
+                    <a href="{{ route('subjects') }}" class="btn-primary bg-white text-indigo-600 font-semibold rounded-full hover:bg-gray-100 shadow-lg text-center">
+                        Explore Courses
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Section -->
+@if($statistics && $statistics->count() > 0)
+<div class="bg-white section-container">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="stats-grid grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 text-center">
+            @foreach($statistics as $stat)
+            <div class="p-4 sm:p-6">
+                <div class="stat-number font-bold text-indigo-600 mb-2">{{ $stat->value }}</div>
+                <div class="text-sm sm:text-base text-gray-600 font-medium">{{ $stat->label }}</div>
+            </div>
+            @endforeach
+        </div>
+    </div>
+</div>
+@else
+<div class="bg-white section-container">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="stats-grid grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 text-center">
+            <div class="p-4 sm:p-6">
+                <div class="stat-number font-bold text-indigo-600 mb-2">1000+</div>
+                <div class="text-sm sm:text-base text-gray-600 font-medium">Active Students</div>
+            </div>
+            <div class="p-4 sm:p-6">
+                <div class="stat-number font-bold text-indigo-600 mb-2">50+</div>
+                <div class="text-sm sm:text-base text-gray-600 font-medium">Expert Instructors</div>
+            </div>
+            <div class="p-4 sm:p-6">
+                <div class="stat-number font-bold text-indigo-600 mb-2">100+</div>
+                <div class="text-sm sm:text-base text-gray-600 font-medium">Courses Available</div>
+            </div>
+            <div class="p-4 sm:p-6">
+                <div class="stat-number font-bold text-indigo-600 mb-2">95%</div>
+                <div class="text-sm sm:text-base text-gray-600 font-medium">Success Rate</div>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
+
+<!-- Why Choose Us Section -->
+<div class="section-container bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-8 sm:mb-12">
+            <h2 class="text-sm sm:text-base text-indigo-600 font-semibold tracking-wide uppercase mb-2">Why Choose Us</h2>
+            <p class="section-title leading-tight font-extrabold tracking-tight text-gray-900">
+                Excellence in Tech Education
+            </p>
+        </div>
+
+        <div class="features-grid grid grid-cols-1 gap-6 sm:gap-8 sm:grid-cols-2 lg:grid-cols-4">
+            <div class="feature-card bg-white p-6 sm:p-8 rounded-xl shadow-md">
+                <div class="icon-box mb-4 sm:mb-6">
+                    <i class="fas fa-laptop-code text-xl sm:text-2xl text-white"></i>
+                </div>
+                <h3 class="text-lg sm:text-xl font-semibold text-gray-900 mb-3">Industry-Relevant Curriculum</h3>
+                <p class="text-sm sm:text-base text-gray-600 leading-relaxed">
+                    Our courses are designed with input from industry experts to ensure you learn the most relevant skills.
+                </p>
+            </div>
+
+            <div class="feature-card bg-white p-6 sm:p-8 rounded-xl shadow-md">
+                <div class="icon-box mb-4 sm:mb-6">
+                    <i class="fas fa-chalkboard-teacher text-xl sm:text-2xl text-white"></i>
+                </div>
+                <h3 class="text-lg sm:text-xl font-semibold text-gray-900 mb-3">Expert Instructors</h3>
+                <p class="text-sm sm:text-base text-gray-600 leading-relaxed">
+                    Learn from experienced professionals who are passionate about teaching and technology.
+                </p>
+            </div>
+
+            <div class="feature-card bg-white p-6 sm:p-8 rounded-xl shadow-md">
+                <div class="icon-box mb-4 sm:mb-6">
+                    <i class="fas fa-project-diagram text-xl sm:text-2xl text-white"></i>
+                </div>
+                <h3 class="text-lg sm:text-xl font-semibold text-gray-900 mb-3">Hands-on Projects</h3>
+                <p class="text-sm sm:text-base text-gray-600 leading-relaxed">
+                    Apply your learning through real-world projects and build a strong portfolio.
+                </p>
+            </div>
+
+            <div class="feature-card bg-white p-6 sm:p-8 rounded-xl shadow-md">
+                <div class="icon-box mb-4 sm:mb-6">
+                    <i class="fas fa-briefcase text-xl sm:text-2xl text-white"></i>
+                </div>
+                <h3 class="text-lg sm:text-xl font-semibold text-gray-900 mb-3">Career Support</h3>
+                <p class="text-sm sm:text-base text-gray-600 leading-relaxed">
+                    Get guidance on career development, resume building, and job placement assistance.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Featured Courses Section -->
+<div class="bg-white section-container">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-8 sm:mb-12">
+            <h2 class="text-sm sm:text-base text-indigo-600 font-semibold tracking-wide uppercase mb-2">Featured Courses</h2>
+            <p class="section-title leading-tight font-extrabold tracking-tight text-gray-900">
+                Popular Subjects
+            </p>
+        </div>
+
+        @if($subjects && $subjects->count() > 0)
+        <div class="courses-grid grid grid-cols-1 gap-6 sm:gap-8 sm:grid-cols-2 lg:grid-cols-3">
+            @foreach($subjects as $subject)
+            <div class="course-card bg-white border-2 border-gray-100 rounded-xl shadow-md overflow-hidden">
+                <div class="p-6 sm:p-8">
+                    <div class="flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-indigo-100 mb-4 sm:mb-6">
+                        <i class="fas fa-book text-2xl sm:text-3xl text-indigo-600"></i>
+                    </div>
+                    <h3 class="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">{{ $subject->name }}</h3>
+                    <p class="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6 leading-relaxed">{{ Str::limit($subject->description, 120) }}</p>
+                    <a href="{{ route('subjects.show', $subject->slug) }}" class="inline-flex items-center text-indigo-600 hover:text-indigo-800 font-semibold text-sm sm:text-base transition-colors">
+                        Learn more
+                        <svg class="ml-2 w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+            @endforeach
+        </div>
+        @endif
+    </div>
+</div>
+
+<!-- Team Section -->
+@if($teams && $teams->count() > 0)
+<div class="bg-gray-50 section-container">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-8 sm:mb-12">
+            <h2 class="text-sm sm:text-base text-indigo-600 font-semibold tracking-wide uppercase mb-2">Our Team</h2>
+            <p class="section-title leading-tight font-extrabold tracking-tight text-gray-900 mb-4">
+                Meet Our Expert Educators
+            </p>
+            <p class="mt-2 sm:mt-4 max-w-2xl text-base sm:text-xl text-gray-500 mx-auto px-4">
+                Our dedicated team of professionals is committed to providing you with the best educational experience.
+            </p>
+        </div>
+
+        <div class="team-grid grid grid-cols-1 gap-6 sm:gap-8 sm:grid-cols-2 lg:grid-cols-3">
+            @foreach($teams->take(6) as $team)
+            <div class="team-card bg-white rounded-xl shadow-md overflow-hidden">
+                <div class="p-6 sm:p-8 text-center">
+                    <div class="flex justify-center mb-4 sm:mb-6">
+                        @if($team->image_path && file_exists(public_path('storage/' . $team->image_path)))
+                        <img class="team-image" 
+                             src="{{ asset('storage/' . $team->image_path) }}" 
+                             alt="{{ $team->name }}">
+                        @else
+                        <img class="team-image" 
+                             src="https://ui-avatars.com/api/?name={{ urlencode($team->name) }}&size=256&background=667eea&color=fff&bold=true" 
+                             alt="{{ $team->name }}">
+                        @endif
+                    </div>
+                    <h3 class="text-lg sm:text-xl font-bold text-gray-900 mb-2">{{ $team->name }}</h3>
+                    <p class="text-sm sm:text-base text-indigo-600 font-semibold mb-4 sm:mb-6">{{ $team->position }}</p>
+                    <div class="flex flex-wrap gap-2 justify-center">
+                        @foreach($team->skills_array as $skill)
+                        <span class="skill-tag">
+                            {{ trim($skill) }}
+                        </span>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+            @endforeach
+        </div>
+
+        <div class="text-center mt-8 sm:mt-12">
+            <a href="{{ route('team.members') }}" class="inline-flex items-center px-6 sm:px-8 py-3 sm:py-4 border border-transparent text-sm sm:text-base font-semibold rounded-full text-white bg-indigo-600 hover:bg-indigo-700 transition duration-300 shadow-lg hover:shadow-xl">
+                View All Members
+                <svg class="ml-2 w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                </svg>
+            </a>
+        </div>
+    </div>
+</div>
+@endif
+
+<!-- CTA Section -->
+<div class="cta-section relative">
+    <div class="max-w-7xl mx-auto py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 sm:gap-8 relative z-10">
+            <div class="text-center lg:text-left">
+                <h2 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-white mb-2">
+                    Ready to start your journey?
+                </h2>
+                <p class="text-lg sm:text-xl text-indigo-100">
+                    Join Naf Academy today.
+                </p>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 lg:flex-shrink-0">
+                <a href="{{ route('register') }}" class="inline-flex items-center justify-center px-6 sm:px-8 py-3 sm:py-4 border-2 border-transparent text-base sm:text-lg font-semibold rounded-full text-indigo-600 bg-white hover:bg-indigo-50 transition duration-300 shadow-lg hover:shadow-xl">
+                    Get started
+                </a>
+                <a href="{{ route('contact') }}" class="inline-flex items-center justify-center px-6 sm:px-8 py-3 sm:py-4 border-2 border-white text-base sm:text-lg font-semibold rounded-full text-white bg-transparent hover:bg-white hover:text-indigo-600 transition duration-300 shadow-lg hover:shadow-xl">
+                    Contact us
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+@endsection

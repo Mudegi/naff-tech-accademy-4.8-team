@@ -1,0 +1,27 @@
+# Robots.txt for Naf Academy
+# https://nafacademy.com
+
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /login
+Disallow: /register
+Disallow: /password/
+Disallow: /storage/private/
+Disallow: /*.pdf$
+Disallow: /checkout/
+Disallow: /payment/
+
+# Allow specific bots
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Slurp
+Allow: /
+
+# Sitemap location
+Sitemap: https://nafacademy.com/sitemap.xml

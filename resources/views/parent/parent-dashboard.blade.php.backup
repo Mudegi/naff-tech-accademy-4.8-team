@@ -1,0 +1,532 @@
+@extends('frontend.layouts.app')
+
+@section('title', 'Parent Dashboard - Monitor Your Children\'s Progress')
+
+@push('styles')
+<style>
+    body {
+        background: #f8f9fa;
+        font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+    }
+    
+    .parent-dashboard {
+        min-height: 100vh;
+        padding: 2rem 0;
+    }
+    
+    .dashboard-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2.5rem;
+        border-radius: 16px;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+    }
+    
+    .dashboard-header h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        border: 1px solid #e9ecef;
+        height: 100%;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    }
+    
+    .stat-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #2d3748;
+        margin: 0;
+    }
+    
+    .stat-label {
+        color: #718096;
+        font-size: 0.875rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .child-card {
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        height: 100%;
+        border: 1px solid #e5e7eb;
+    }
+    
+    .child-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    }
+    
+    .performance-circle {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto;
+        position: relative;
+        background: #f8f9fa;
+    }
+    
+    .performance-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #2d3748;
+    }
+    
+    .performance-label {
+        font-size: 0.75rem;
+        color: #718096;
+        font-weight: 600;
+    }
+    
+    .grade-badge {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        border-radius: 24px;
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+    
+    .grade-excellent {
+        background: #d1fae5;
+        color: #065f46;
+    }
+    
+    .grade-good {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+    
+    .grade-fair {
+        background: #fef3c7;
+        color: #92400e;
+    }
+    
+    .grade-poor {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+    
+    .metric-box {
+        text-align: center;
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+    
+    .metric-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #2d3748;
+    }
+    
+    .metric-label {
+        font-size: 0.75rem;
+        color: #718096;
+        margin-top: 0.25rem;
+    }
+    
+    .alert-box {
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: start;
+        gap: 0.75rem;
+    }
+    
+    .alert-warning {
+        background: #fff7ed;
+        border-left: 4px solid #f59e0b;
+    }
+    
+    .alert-danger {
+        background: #fef2f2;
+        border-left: 4px solid #ef4444;
+    }
+    
+    .alert-success {
+        background: #ecfdf5;
+        border-left: 4px solid #10b981;
+    }
+    
+    .activity-item {
+        padding: 1rem;
+        border-bottom: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: background 0.2s;
+    }
+    
+    .activity-item:hover {
+        background: #f9fafb;
+    }
+    
+    .activity-item:last-child {
+        border-bottom: none;
+    }
+    
+
+    
+    .info-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    }
+    
+    .empty-state-icon {
+        font-size: 4rem;
+        color: #cbd5e0;
+        margin-bottom: 1.5rem;
+    }
+</style>
+@endpush
+
+@section('content')
+<div class="parent-dashboard">
+<div class="container"
+    <!-- Page Header -->
+    <div class="dashboard-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1><i class="fas fa-users me-2"></i>Parent Dashboard</h1>
+                <p class="mb-0" style="opacity: 0.9;">Welcome back! Monitor your children's academic progress in real-time</p>
+            </div>
+            <div class="text-end">
+                <div style="opacity: 0.9; font-size: 0.875rem;">{{ now()->format('l') }}</div>
+                <div style="font-size: 1.25rem; font-weight: 600;">{{ now()->format('F j, Y') }}</div>
+            </div>
+        </div>
+    </div>
+
+    @if($children->isEmpty())
+        <!-- No Children Linked -->
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="empty-state">
+                    <div class="empty-state-icon">
+                        <i class="fas fa-user-friends"></i>
+                    </div>
+                    <h2 style="color: #2d3748; font-weight: 700;">No Children Linked Yet</h2>
+                    <p style="color: #718096; font-size: 1.125rem; max-width: 500px; margin: 1rem auto 2rem;">
+                        Your account is not currently linked to any students. Please contact your school administrator 
+                        to link your account to your child's/children's account(s).
+                    </p>
+                    <div style="background: #eff6ff; border: 2px solid #3b82f6; border-radius: 12px; padding: 1.5rem; display: inline-block;">
+                        <i class="fas fa-info-circle me-2" style="color: #3b82f6;"></i>
+                        <strong style="color: #1e40af;">Note:</strong> The school will verify your relationship before linking accounts
+                    </div>
+                </div>
+            </div>
+        </div>
+    @else
+        <!-- Overall Summary Cards -->
+        @if($overallSummary)
+        <div class="row g-4 mb-5">
+            <div class="col-lg-3 col-md-6">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <p class="stat-value">{{ $overallSummary['total_children'] }}</p>
+                    <p class="stat-label mb-0">Total Children</p>
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white;">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <p class="stat-value">{{ $overallSummary['performing_well'] }}</p>
+                    <p class="stat-label mb-1">Performing Well</p>
+                    <small style="color: #10b981; font-weight: 600;">≥ 70%</small>
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white;">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <p class="stat-value">{{ $overallSummary['needs_attention'] }}</p>
+                    <p class="stat-label mb-1">Needs Attention</p>
+                    <small style="color: #f59e0b; font-weight: 600;">< 50%</small>
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white;">
+                        <i class="fas fa-clipboard-list"></i>
+                    </div>
+                    <p class="stat-value">{{ $overallSummary['total_activities'] }}</p>
+                    <p class="stat-label mb-1">Total Activities</p>
+                    <small style="color: #3b82f6; font-weight: 600;">Combined</small>
+                </div>
+            </div>
+        </div>
+        @endif
+
+        <!-- Children Performance Cards -->
+        <div class="row g-4">
+            @foreach($childrenData as $data)
+            @php
+                $student = $data['student'];
+                $performance = $data['performance'];
+                $recentActivity = $data['recent_activity'];
+                $alerts = $data['alerts'];
+                
+                // Determine card style based on performance
+                $cardClass = 'good';
+                $gradeClass = 'grade-good';
+                if ($performance['overall_average'] >= 80) {
+                    $cardClass = 'excellent';
+                    $gradeClass = 'grade-excellent';
+                } elseif ($performance['overall_average'] < 50) {
+                    $cardClass = 'poor';
+                    $gradeClass = 'grade-poor';
+                } elseif ($performance['overall_average'] < 70) {
+                    $cardClass = 'fair';
+                    $gradeClass = 'grade-fair';
+                }
+            @endphp
+
+            <div class="col-lg-6">
+                <div class="child-card {{ $cardClass }}">
+                    <div style="padding: 1.5rem; border-bottom: 1px solid #e5e7eb;">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div class="d-flex align-items-center gap-3">
+                                <div style="width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);">
+                                    {{ strtoupper(substr($student->name, 0, 1)) }}
+                                </div>
+                                <div>
+                                    <h5 style="margin: 0; font-weight: 700; color: #2d3748;">{{ $student->name }}</h5>
+                                    <div style="color: #718096; font-size: 0.875rem; margin-top: 0.25rem;">
+                                        <i class="fas fa-graduation-cap me-1"></i>
+                                        {{ $student->student->class_name ?? 'Class not assigned' }}
+                                        @if($student->student)
+                                        · {{ $student->student->level ?? 'N/A' }}
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                            <a href="{{ route('parent.children.show', $student->id) }}" style="background: #667eea; color: white; border: none; padding: 0.5rem 1rem; border-radius: 8px; font-weight: 600; text-decoration: none; transition: all 0.3s; display: inline-block;">
+                                View Details
+                            </a>
+                        </div>
+                    </div>
+
+                    <div style="padding: 1.5rem;">
+                        <!-- Performance Overview -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-12 text-center mb-3">
+                                <div class="performance-circle" style="background: linear-gradient(135deg, {{ $performance['overall_average'] >= 70 ? '#10b981, #059669' : ($performance['overall_average'] >= 50 ? '#f59e0b, #d97706' : '#ef4444, #dc2626') }}); box-shadow: 0 4px 16px rgba(0,0,0,0.1);">
+                                    <div class="performance-value" style="color: white;">{{ $performance['overall_average'] }}%</div>
+                                    <span class="grade-badge {{ $gradeClass }}" style="margin-top: 0.5rem;">
+                                        {{ $performance['letter_grade'] }}
+                                    </span>
+                                </div>
+                                <div class="performance-label mt-2" style="font-size: 0.875rem; color: #718096;">Overall Performance</div>
+                            </div>
+                            
+                            <div class="col-6">
+                                <div class="metric-box">
+                                    <div style="color: #10b981; margin-bottom: 0.5rem;">
+                                        <i class="fas fa-clipboard-check fa-lg"></i>
+                                    </div>
+                                    <div class="metric-value">{{ $performance['total_assignments'] }}</div>
+                                    <div class="metric-label">Assignments</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="metric-box">
+                                    <div style="color: #3b82f6; margin-bottom: 0.5rem;">
+                                        <i class="fas fa-file-alt fa-lg"></i>
+                                    </div>
+                                    <div class="metric-value">{{ $performance['total_exams'] }}</div>
+                                    <div class="metric-label">Exams</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Pending Work Alert -->
+                        @if($performance['pending_assignments'] > 0)
+                        <div class="alert-box alert-warning">
+                            <i class="fas fa-clock" style="color: #f59e0b; font-size: 1.25rem;"></i>
+                            <div style="flex: 1;">
+                                <strong style="color: #92400e;">{{ $performance['pending_assignments'] }}</strong>
+                                <span style="color: #92400e;"> assignment(s) awaiting grading</span>
+                            </div>
+                        </div>
+                        @endif
+
+                        <!-- Alerts -->
+                        @if(!empty($alerts))
+                        <div class="mb-4">
+                            <h6 style="font-weight: 700; color: #2d3748; margin-bottom: 1rem;">
+                                <i class="fas fa-bell me-2" style="color: #667eea;"></i>Alerts
+                            </h6>
+                            @foreach(array_slice($alerts, 0, 2) as $alert)
+                            <div class="alert-box alert-{{ $alert['type'] }}">
+                                <i class="fas fa-{{ $alert['icon'] }}" style="font-size: 1.125rem;"></i>
+                                <div>{{ $alert['message'] }}</div>
+                            </div>
+                            @endforeach
+                            @if(count($alerts) > 2)
+                            <div style="text-align: center; margin-top: 0.75rem;">
+                                <a href="{{ route('parent.children.show', $student->id) }}" style="color: #667eea; font-weight: 600; text-decoration: none;">
+                                    +{{ count($alerts) - 2 }} more alerts →
+                                </a>
+                            </div>
+                            @endif
+                        </div>
+                        @endif
+
+                        <!-- Recent Activity -->
+                        @if(!empty($recentActivity))
+                        <div>
+                            <h6 style="font-weight: 700; color: #2d3748; margin-bottom: 1rem;">
+                                <i class="fas fa-history me-2" style="color: #667eea;"></i>Recent Activity
+                            </h6>
+                            <div style="background: #f8f9fa; border-radius: 8px; overflow: hidden;">
+                                @foreach(array_slice($recentActivity, 0, 3) as $activity)
+                                <div class="activity-item">
+                                    <div style="flex: 1;">
+                                        <div style="color: #2d3748; font-weight: 600; margin-bottom: 0.25rem;">
+                                            <i class="fas fa-{{ $activity['type'] == 'assignment' ? 'clipboard-check' : 'file-alt' }}" style="color: #667eea; margin-right: 0.5rem;"></i>
+                                            {{ $activity['title'] }}
+                                        </div>
+                                        <div style="color: #718096; font-size: 0.75rem;">
+                                            {{ $activity['date']->diffForHumans() }}
+                                        </div>
+                                    </div>
+                                    <div style="text-align: right;">
+                                        <span class="grade-badge {{ $activity['percentage'] >= 70 ? 'grade-excellent' : ($activity['percentage'] >= 50 ? 'grade-fair' : 'grade-poor') }}">
+                                            {{ $activity['percentage'] }}%
+                                        </span>
+                                        <div style="color: #718096; font-size: 0.75rem; margin-top: 0.25rem;">
+                                            {{ $activity['grade'] }}
+                                        </div>
+                                    </div>
+                                </div>
+                                @endforeach
+                            </div>
+                        </div>
+                        @else
+                        <div style="text-align: center; padding: 2rem; background: #f8f9fa; border-radius: 8px;">
+                            <i class="fas fa-inbox" style="font-size: 2.5rem; color: #cbd5e0; margin-bottom: 1rem;"></i>
+                            <div style="color: #718096; font-weight: 600;">No recent activity</div>
+                            <div style="color: #a0aec0; font-size: 0.875rem; margin-top: 0.25rem;">Activity will appear as work is graded</div>
+                        </div>
+                        @endif
+                    </div>
+
+                    <div style="background: #f8f9fa; padding: 1rem; border-top: 1px solid #e5e7eb;">
+                        <div class="row g-0">
+                            <div class="col-4 text-center">
+                                <a href="{{ route('parent.children.show', $student->id) }}" style="color: #667eea; text-decoration: none; font-weight: 600; font-size: 0.875rem; display: block; padding: 0.5rem;">
+                                    <i class="fas fa-chart-bar d-block mb-1" style="font-size: 1.125rem;"></i>
+                                    Performance
+                                </a>
+                            </div>
+                            <div class="col-4 text-center" style="border-left: 1px solid #e5e7eb; border-right: 1px solid #e5e7eb;">
+                                <a href="#" style="color: #667eea; text-decoration: none; font-weight: 600; font-size: 0.875rem; display: block; padding: 0.5rem;" onclick="alert('Teacher messaging coming soon!'); return false;">
+                                    <i class="fas fa-comment-dots d-block mb-1" style="font-size: 1.125rem;"></i>
+                                    Message
+                                </a>
+                            </div>
+                            <div class="col-4 text-center">
+                                <a href="#" style="color: #667eea; text-decoration: none; font-weight: 600; font-size: 0.875rem; display: block; padding: 0.5rem;" onclick="alert('Reports coming soon!'); return false;">
+                                    <i class="fas fa-download d-block mb-1" style="font-size: 1.125rem;"></i>
+                                    Reports
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @endforeach
+        </div>
+
+        <!-- Information Card for Parents -->
+        <div class="row mt-5">
+            <div class="col-12">
+                <div class="info-card">
+                    <h4 style="font-weight: 700; margin-bottom: 1.5rem;">
+                        <i class="fas fa-lightbulb me-2"></i>About This Dashboard
+                    </h4>
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <h6 style="font-weight: 600; margin-bottom: 1rem; opacity: 0.95;">What You're Seeing:</h6>
+                            <ul style="opacity: 0.9; line-height: 1.8;">
+                                <li>Real-time academic performance across all subjects</li>
+                                <li>Grades from assignments, projects, and examinations</li>
+                                <li>On-time submission rates and work completion status</li>
+                                <li>Performance trends and alerts for early intervention</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 style="font-weight: 600; margin-bottom: 1rem; opacity: 0.95;">Value of Your Investment:</h6>
+                            <ul style="opacity: 0.9; line-height: 1.8;">
+                                <li>Continuous visibility into learning progress</li>
+                                <li>Early identification of areas needing support</li>
+                                <li>Transparent assessment of teaching effectiveness</li>
+                                <li>Data-driven decisions about your child's education</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); padding: 1.25rem; border-radius: 12px; margin-top: 1.5rem;">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Note:</strong> Performance data updates automatically as teachers grade work. 
+                        If you notice delays in grading, please contact your child's teachers or school administration.
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+</div>
+</div>
+@endsection
