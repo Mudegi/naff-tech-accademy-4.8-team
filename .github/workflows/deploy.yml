@@ -1,0 +1,250 @@
+name: Deploy to Shared Hosting
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch: # Allows manual triggering
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, xml, bcmath, pdo, pdo_mysql
+          coverage: none
+      
+      - name: Install dependencies
+        run: |
+          composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+      
+      - name: Create deployment package
+        run: |
+          # Create deployment directory with all necessary files
+          mkdir -p deployment
+          
+          # Copy all files except those in .gitignore
+          # Note: --include must come before --exclude for proper pattern matching
+          # Exit code 24 means some files vanished, but that's okay for our use case
+          rsync -av \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='node_modules' \
+            --exclude='vendor' \
+            --exclude='.env' \
+            --exclude='.env.*' \
+            --include='storage/api-docs/api-docs.json' \
+            --exclude='storage/logs/*' \
+            --exclude='storage/framework/cache/*' \
+            --exclude='storage/framework/sessions/*' \
+            --exclude='storage/framework/views/*' \
+            --exclude='storage/app/**' \
+            --exclude='storage/**' \
+            --exclude='bootstrap/cache/*' \
+            --exclude='tests' \
+            --exclude='stubs' \
+            --exclude='.gitignore' \
+            --exclude='phpunit.xml' \
+            --exclude='.phpunit.result.cache' \
+            --exclude='public' \
+            ./ deployment/ || [ $? -eq 24 ] && echo "Some files vanished during rsync (this is normal)" || exit $?
+          
+          # Only copy public/build folder (nothing else from public)
+          mkdir -p deployment/public
+          if [ -d "public/build" ]; then
+            rsync -av public/build/ deployment/public/build/ || [ $? -eq 24 ] && echo "Some files vanished during rsync (this is normal)" || exit $?
+          else
+            echo "Warning: public/build directory not found"
+          fi
+      
+      - name: Verify deployment structure
+        run: |
+          echo "Deployment directory contents:"
+          ls -la deployment/ | head -20
+          echo ""
+          echo "First level directories:"
+          find deployment/ -maxdepth 1 -type d | head -10
+          echo ""
+          echo "Checking for config directory:"
+          ls -la deployment/config/ 2>/dev/null || echo "Config directory not found (this is OK if your app doesn't have one)"
+          echo ""
+          echo "✅ Verifying api-docs.json is included:"
+          if [ -f "deployment/storage/api-docs/api-docs.json" ]; then
+            echo "✅ api-docs.json found in deployment package"
+            ls -lh deployment/storage/api-docs/api-docs.json
+          else
+            echo "❌ WARNING: api-docs.json NOT found in deployment package!"
+            echo "Checking storage directory structure:"
+            ls -la deployment/storage/ 2>/dev/null || echo "Storage directory not found"
+          fi
+          echo ""
+          echo "✅ Verifying only public/build is included:"
+          echo "Public directory contents:"
+          ls -la deployment/public/ 2>/dev/null || echo "Public directory not found"
+          if [ -d "deployment/public/build" ]; then
+            echo "✅ public/build directory found"
+            echo "Build directory size: $(du -sh deployment/public/build | cut -f1)"
+          else
+            echo "❌ WARNING: public/build directory NOT found!"
+          fi
+          if [ -d "deployment/public/uploads" ]; then
+            echo "❌ ERROR: public/uploads should NOT be in deployment package!"
+            exit 1
+          else
+            echo "✅ public/uploads correctly excluded"
+          fi
+          echo ""
+          echo "✅ Verifying vendor is excluded:"
+          if [ -d "deployment/vendor" ]; then
+            echo "❌ ERROR: vendor folder should NOT be in deployment package!"
+            exit 1
+          else
+            echo "✅ vendor correctly excluded"
+          fi
+          echo ""
+          echo "⚠️ IMPORTANT: FTP_REMOTE_DIR should point to your Laravel app root"
+          echo "Example: /public_html or /saccoapi.weafcompany.com"
+          echo "It should NOT include '/deployment' in the path"
+          echo ""
+          echo "Files to be deployed:"
+          find deployment/ -type f | head -20
+      
+      - name: Verify FTP configuration
+        run: |
+          echo "🔍 Verifying FTP configuration..."
+          echo "FTP_SERVER: ${{ secrets.FTP_SERVER }}"
+          echo "FTP_USERNAME: ${{ secrets.FTP_USERNAME }}"
+          echo "FTP_PROTOCOL: ${{ secrets.FTP_PROTOCOL || 'ftp' }}"
+          echo "FTP_PORT: ${{ secrets.FTP_PORT || 21 }}"
+          echo "FTP_REMOTE_DIR: ${{ secrets.FTP_REMOTE_DIR }}"
+          echo ""
+          
+          # Validate FTP_REMOTE_DIR is set
+          FTP_REMOTE_DIR_VALUE="${{ secrets.FTP_REMOTE_DIR }}"
+          if [ -z "$FTP_REMOTE_DIR_VALUE" ]; then
+            echo "❌ ERROR: FTP_REMOTE_DIR secret is not set!"
+            echo "Please set FTP_REMOTE_DIR in GitHub Secrets"
+            exit 1
+          fi
+          
+          # Normalize the path (remove trailing slashes for checking)
+          NORMALIZED_DIR=$(echo "$FTP_REMOTE_DIR_VALUE" | sed 's|/*$||')
+          
+          # Debug: Show what we're checking (masked for security)
+          echo "Checking FTP_REMOTE_DIR value..."
+          echo "Normalized path: ${NORMALIZED_DIR:0:10}...${NORMALIZED_DIR: -20}"
+          
+          # Check if FTP_REMOTE_DIR contains '/deployment' (common mistake) - multiple patterns
+          if echo "$NORMALIZED_DIR" | grep -q "/deployment"; then
+            echo "❌ ERROR: FTP_REMOTE_DIR contains '/deployment'"
+            echo ""
+            echo "Your FTP_REMOTE_DIR secret value appears to be: [REDACTED]/deployment"
+            echo ""
+            echo "This is INCORRECT. The FTP-Deploy-Action will try to access:"
+            echo "  ${FTP_REMOTE_DIR_VALUE}/deployment"
+            echo ""
+            echo "This directory doesn't exist on your server, causing the error:"
+            echo "  '550 Can't change directory to /***/deployment: No such file or directory'"
+            echo ""
+            echo "🔧 HOW TO FIX:"
+            echo "  1. Go to your GitHub repository"
+            echo "  2. Click: Settings → Secrets and variables → Actions"
+            echo "  3. Find and click on 'FTP_REMOTE_DIR'"
+            echo "  4. Edit the value and REMOVE '/deployment' from the end"
+            echo ""
+            echo "Example fixes:"
+            echo "  If current value is: /public_html/deployment"
+            echo "  Change it to:       /public_html"
+            echo ""
+            echo "  If current value is: /home/weafpfpw/public_html/deployment"
+            echo "  Change it to:       /home/weafpfpw/public_html"
+            echo ""
+            echo "✅ Correct values (no '/deployment' at the end):"
+            echo "  /public_html"
+            echo "  /home/weafpfpw/public_html"
+            echo "  /saccoapi.weafcompany.com"
+            echo "  /domains/saccoapi.weafcompany.com/public_html"
+            exit 1
+          fi
+          
+          # Check if it ends with just "deployment" (without leading slash)
+          if [[ "$NORMALIZED_DIR" == "deployment" ]] || [[ "$NORMALIZED_DIR" == "/deployment" ]]; then
+            echo "❌ ERROR: FTP_REMOTE_DIR cannot be just 'deployment'"
+            echo "Please set it to your actual Laravel app root directory"
+            exit 1
+          fi
+          
+          echo "✅ FTP_REMOTE_DIR validation passed"
+          echo ""
+          echo "⚠️ IMPORTANT: Ensure FTP_REMOTE_DIR:"
+          echo "  - Points to your Laravel app root (e.g., /public_html or /saccoapi.weafcompany.com)"
+          echo "  - Does NOT include '/deployment' in the path"
+          echo "  - Does NOT have a trailing slash (workflow adds it automatically)"
+          echo "  - The directory exists on the server"
+          echo "  - The FTP user has write permissions"
+          echo ""
+          echo "Example correct values (in GitHub Secret - no trailing slash):"
+          echo "  ✅ /saccoapi.weafcompany.com"
+          echo "  ✅ /public_html"
+          echo "  ✅ /domains/saccoapi.weafcompany.com/public_html"
+          echo "  ✅ /home/weafpfpw/public_html"
+          echo ""
+          echo "❌ INCORRECT values:"
+          echo "  ❌ /saccoapi.weafcompany.com/deployment"
+          echo "  ❌ /public_html/deployment"
+          echo "  ❌ deployment"
+          echo ""
+          echo "Note: The workflow automatically adds trailing slash (/) for FTP-Deploy-Action"
+          
+      - name: Deploy via FTP/FTPS
+        uses: SamKirkland/FTP-Deploy-Action@4.3.0
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ${{ secrets.FTP_PROTOCOL || 'ftp' }}
+          port: ${{ secrets.FTP_PORT || 21 }}
+          local-dir: ./deployment/
+          server-dir: ${{ secrets.FTP_REMOTE_DIR }}/
+          log-level: verbose
+          dry-run: false
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            **/vendor/**
+            **/tests/**
+            **/.env*
+            **/storage/logs/**
+            **/storage/framework/**
+            **/storage/app/**
+            **/.github/**
+            **/public/uploads/**
+            # Note: Only public/build is deployed (see rsync step above)
+            # The deployment directory only contains public/build/ from the public folder
+            # vendor and public/uploads are explicitly excluded
+      
+      - name: Run post-deployment tasks
+        run: |
+          echo "Deployment completed to shared hosting!"
+          echo ""
+          echo "⚠️ IMPORTANT: vendor folder was NOT uploaded (excluded for faster deployment)"
+          echo ""
+          echo "Please ensure:"
+          echo "1. .env file is configured on server"
+          echo "2. ⚠️ Run 'composer install --no-dev --optimize-autoloader' on server (vendor folder excluded)"
+          echo "3. Run 'php artisan migrate --force' on server"
+          echo "4. Run 'php artisan config:cache' and 'php artisan route:cache' on server"
+          echo "5. Set correct permissions for storage and bootstrap/cache directories"
+      
+      - name: Cleanup
+        run: rm -rf deployment
+

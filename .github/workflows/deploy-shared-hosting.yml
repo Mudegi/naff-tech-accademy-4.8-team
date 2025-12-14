@@ -1,0 +1,170 @@
+name: Deploy to Shared Hosting (FTP/SFTP)
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch: # Allows manual triggering
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, xml, bcmath, pdo, pdo_mysql
+          coverage: none
+      
+      - name: Install dependencies
+        run: |
+          composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+      
+      - name: Prepare deployment files
+        run: |
+          # Remove files not needed in production (including vendor - will be installed on server)
+          rm -rf .git .github node_modules vendor tests .gitignore phpunit.xml .phpunit.result.cache .env .env.*
+          
+          # Create necessary directories
+          mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views storage/logs bootstrap/cache
+          
+          # Note: We don't run composer dump-autoload here since vendor is excluded
+          # Composer will be run on the server after deployment
+      
+      - name: Verify FTP configuration
+        run: |
+          echo "🔍 Verifying FTP configuration..."
+          echo "FTP_SERVER: ${{ secrets.FTP_SERVER }}"
+          echo "FTP_USERNAME: ${{ secrets.FTP_USERNAME }}"
+          echo "FTP_PROTOCOL: ${{ secrets.FTP_PROTOCOL || 'ftp' }}"
+          echo "FTP_PORT: ${{ secrets.FTP_PORT || 21 }}"
+          echo "FTP_REMOTE_DIR: ${{ secrets.FTP_REMOTE_DIR }}"
+          echo ""
+          
+          # Validate FTP_REMOTE_DIR is set
+          FTP_REMOTE_DIR_VALUE="${{ secrets.FTP_REMOTE_DIR }}"
+          if [ -z "$FTP_REMOTE_DIR_VALUE" ]; then
+            echo "❌ ERROR: FTP_REMOTE_DIR secret is not set!"
+            echo "Please set FTP_REMOTE_DIR in GitHub Secrets"
+            exit 1
+          fi
+          
+          # Normalize the path (remove trailing slashes for checking)
+          NORMALIZED_DIR=$(echo "$FTP_REMOTE_DIR_VALUE" | sed 's|/*$||')
+          
+          # Debug: Show what we're checking (masked for security)
+          echo "Checking FTP_REMOTE_DIR value..."
+          echo "Normalized path: ${NORMALIZED_DIR:0:10}...${NORMALIZED_DIR: -20}"
+          
+          # Check if FTP_REMOTE_DIR contains '/deployment' (common mistake) - multiple patterns
+          if echo "$NORMALIZED_DIR" | grep -q "/deployment"; then
+            echo "❌ ERROR: FTP_REMOTE_DIR contains '/deployment'"
+            echo ""
+            echo "Your FTP_REMOTE_DIR secret value appears to be: [REDACTED]/deployment"
+            echo ""
+            echo "This is INCORRECT. The FTP-Deploy-Action will try to access:"
+            echo "  ${FTP_REMOTE_DIR_VALUE}/deployment"
+            echo ""
+            echo "This directory doesn't exist on your server, causing the error:"
+            echo "  '550 Can't change directory to /***/deployment: No such file or directory'"
+            echo ""
+            echo "🔧 HOW TO FIX:"
+            echo "  1. Go to your GitHub repository"
+            echo "  2. Click: Settings → Secrets and variables → Actions"
+            echo "  3. Find and click on 'FTP_REMOTE_DIR'"
+            echo "  4. Edit the value and REMOVE '/deployment' from the end"
+            echo ""
+            echo "Example fixes:"
+            echo "  If current value is: /public_html/deployment"
+            echo "  Change it to:       /public_html"
+            echo ""
+            echo "  If current value is: /home/weafpfpw/public_html/deployment"
+            echo "  Change it to:       /home/weafpfpw/public_html"
+            echo ""
+            echo "✅ Correct values (no '/deployment' at the end):"
+            echo "  /public_html"
+            echo "  /home/weafpfpw/public_html"
+            echo "  /saccoapi.weafcompany.com"
+            echo "  /domains/saccoapi.weafcompany.com/public_html"
+            exit 1
+          fi
+          
+          # Check if it ends with just "deployment" (without leading slash)
+          if [[ "$NORMALIZED_DIR" == *"deployment" ]] && [[ "$NORMALIZED_DIR" != *"/deployment"* ]]; then
+            # This might be okay if it's part of a path like /something-deployment, but check
+            if [[ "$NORMALIZED_DIR" == "deployment" ]] || [[ "$NORMALIZED_DIR" == "/deployment" ]]; then
+              echo "❌ ERROR: FTP_REMOTE_DIR cannot be just 'deployment'"
+              echo "Please set it to your actual Laravel app root directory"
+              exit 1
+            fi
+          fi
+          
+          echo "✅ FTP_REMOTE_DIR validation passed"
+          echo ""
+          echo "⚠️ IMPORTANT: Ensure FTP_REMOTE_DIR:"
+          echo "  - Points to your Laravel app root (e.g., /public_html or /saccoapi.weafcompany.com)"
+          echo "  - Does NOT include '/deployment' in the path"
+          echo "  - Does NOT have a trailing slash (workflow adds it automatically)"
+          echo "  - The directory exists on the server"
+          echo "  - The FTP user has write permissions"
+          echo ""
+          echo "Example correct values (in GitHub Secret - no trailing slash):"
+          echo "  ✅ /saccoapi.weafcompany.com"
+          echo "  ✅ /public_html"
+          echo "  ✅ /domains/saccoapi.weafcompany.com/public_html"
+          echo "  ✅ /home/weafpfpw/public_html"
+          echo ""
+          echo "❌ INCORRECT values:"
+          echo "  ❌ /saccoapi.weafcompany.com/deployment"
+          echo "  ❌ /public_html/deployment"
+          echo "  ❌ deployment"
+          echo ""
+          echo "Note: The workflow automatically adds trailing slash (/) for FTP-Deploy-Action"
+      
+      # FTP Deployment disabled - FTP_REMOTE_DIR configuration issue
+      # To re-enable: Fix FTP_REMOTE_DIR secret to remove '/deployment' suffix
+      # - name: Deploy via FTP/FTPS
+      #   uses: SamKirkland/FTP-Deploy-Action@4.3.0
+      #   with:
+      #     server: ${{ secrets.FTP_SERVER }}
+      #     username: ${{ secrets.FTP_USERNAME }}
+      #     password: ${{ secrets.FTP_PASSWORD }}
+      #     protocol: ${{ secrets.FTP_PROTOCOL || 'ftp' }}
+      #     port: ${{ secrets.FTP_PORT || 21 }}
+      #     local-dir: ./
+      #     server-dir: ${{ secrets.FTP_REMOTE_DIR }}/
+      #     dangerous-clean-slate: false
+      #     exclude: |
+      #       **/.git*
+      #       **/.git*/**
+      #       **/node_modules/**
+      #       **/vendor/**
+      #       **/tests/**
+      #       **/.env*
+      #       **/.github/**
+      #       **/storage/logs/**
+      #       **/storage/framework/cache/**
+      #       **/storage/framework/sessions/**
+      #       **/storage/framework/views/**
+      #       **/storage/app/**
+      #       **/bootstrap/cache/**
+      #     include: |
+      #       **/storage/api-docs/api-docs.json
+      
+      - name: Deployment Summary
+        run: |
+          echo "## ⚠️ FTP Deployment Disabled" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "FTP deployment has been temporarily disabled due to configuration issues." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### To Re-enable:" >> $GITHUB_STEP_SUMMARY
+          echo "1. Fix FTP_REMOTE_DIR secret in GitHub Settings → Secrets" >> $GITHUB_STEP_SUMMARY
+          echo "2. Remove '/deployment' from the end of FTP_REMOTE_DIR value" >> $GITHUB_STEP_SUMMARY
+          echo "3. Uncomment the FTP deployment step in .github/workflows/deploy-shared-hosting.yml" >> $GITHUB_STEP_SUMMARY
+
