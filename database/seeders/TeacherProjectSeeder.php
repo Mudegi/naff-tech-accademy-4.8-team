@@ -62,14 +62,7 @@ class TeacherProjectSeeder extends Seeder
                         'first_name' => 'Student',
                         'last_name' => (string)$i,
                         'school_id' => $school->id,
-                        'level' => 'S1',
-                    ]
-                );
-
-                $students[] = $user;
-            }
-
-            // Create a group and attach students
+                    'level' => 'O Level',
             $group = Group::updateOrCreate(
                 ['name' => 'Demo Project Group', 'school_id' => $school->id],
                 [
