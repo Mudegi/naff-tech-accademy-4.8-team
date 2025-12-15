@@ -175,7 +175,7 @@ class SchoolSubscriptionController extends Controller
             }
             
             $startDate = Carbon::now();
-            $endDate = $startDate->copy()->addDays($package->duration_days);
+            $endDate = $startDate->copy()->addDays((int) $package->duration_days);
 
             $subscription = SchoolSubscription::create([
                 'school_id' => $school->id,
