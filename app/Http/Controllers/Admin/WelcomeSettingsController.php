@@ -88,7 +88,7 @@ class WelcomeSettingsController extends Controller
 
             // Add image validation rules with more flexible dimensions
             foreach ($imageFields as $field) {
-                $rules[$field] = 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240|dimensions:min_width=800,min_height=400';
+                $rules[$field] = 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120|dimensions:min_width=800,min_height=400';
             }
 
             // Get existing record first to preserve images
