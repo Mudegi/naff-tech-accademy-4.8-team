@@ -1,184 +1,184 @@
-@extends('layouts.student-dashboard')
+<?php $__env->startSection('title', 'My Videos'); ?>
 
-@section('title', 'My Videos')
+<?php $__env->startSection('content'); ?>
 
-@section('content')
-{{-- Remove mobile redirect logic - users with subscriptions should access their videos regardless of device --}}
 <div class="my-videos-container">
     <div class="my-videos-header">
-        <h1>@if(in_array(session('user_type'), ['teacher', 'subject_teacher'])) My Created Videos @else My Videos @endif</h1>
+        <h1><?php if(in_array(session('user_type'), ['teacher', 'subject_teacher'])): ?> My Created Videos <?php else: ?> My Videos <?php endif; ?></h1>
     </div>
     <div class="my-videos-filters">
-        <form id="filterForm" action="{{ route('student.my-videos') }}" method="GET">
-            @if(in_array(session('user_type'), ['teacher', 'subject_teacher']))
+        <form id="filterForm" action="<?php echo e(route('student.my-videos')); ?>" method="GET">
+            <?php if(in_array(session('user_type'), ['teacher', 'subject_teacher'])): ?>
                 <div class="teacher-filters">
                     <label for="filter">Filter Videos</label>
                     <select name="filter" id="filter" onchange="this.form.submit()">
                         <option value="">All My Videos</option>
-                        <option value="unreplied_comments" {{ request('filter') === 'unreplied_comments' ? 'selected' : '' }}>Videos with Unreplied Student Comments</option>
-                        <option value="replied_comments" {{ request('filter') === 'replied_comments' ? 'selected' : '' }}>Videos with Replied Student Comments</option>
+                        <option value="unreplied_comments" <?php echo e(request('filter') === 'unreplied_comments' ? 'selected' : ''); ?>>Videos with Unreplied Student Comments</option>
+                        <option value="replied_comments" <?php echo e(request('filter') === 'replied_comments' ? 'selected' : ''); ?>>Videos with Replied Student Comments</option>
                     </select>
                 </div>
-            @endif
+            <?php endif; ?>
             <div class="my-videos-filters-grid">
-                @if(!isset($isSchoolStudent) || !$isSchoolStudent)
-                {{-- Only show class filter for non-school students --}}
+                <?php if(!isset($isSchoolStudent) || !$isSchoolStudent): ?>
+                
                 <div>
                     <label for="class_id">Class</label>
                     <select name="class_id" id="class_id" onchange="this.form.submit()">
                         <option value="">All Classes</option>
-                        @foreach($classes as $class)
-                            <option value="{{ $class->id }}" {{ request('class_id') == $class->id ? 'selected' : '' }}>{{ $class->name }}</option>
-                        @endforeach
+                        <?php $__currentLoopData = $classes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $class): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($class->id); ?>" <?php echo e(request('class_id') == $class->id ? 'selected' : ''); ?>><?php echo e($class->name); ?></option>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </select>
                 </div>
-                @endif
+                <?php endif; ?>
                 <div>
                     <label for="subject_id">Subject</label>
                     <select name="subject_id" id="subject_id" onchange="this.form.submit()">
                         <option value="">All Subjects</option>
-                        @foreach($subjects as $subject)
-                            <option value="{{ $subject->id }}" {{ request('subject_id') == $subject->id ? 'selected' : '' }}>{{ $subject->name }}</option>
-                        @endforeach
+                        <?php $__currentLoopData = $subjects; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $subject): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($subject->id); ?>" <?php echo e(request('subject_id') == $subject->id ? 'selected' : ''); ?>><?php echo e($subject->name); ?></option>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </select>
                 </div>
                 <div>
                     <label for="topic_id">Topic</label>
                     <select name="topic_id" id="topic_id" onchange="this.form.submit()">
                         <option value="">All Topics</option>
-                        @foreach($topics as $topic)
-                            <option value="{{ $topic->id }}" {{ request('topic_id') == $topic->id ? 'selected' : '' }}>{{ $topic->name }}</option>
-                        @endforeach
+                        <?php $__currentLoopData = $topics; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $topic): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($topic->id); ?>" <?php echo e(request('topic_id') == $topic->id ? 'selected' : ''); ?>><?php echo e($topic->name); ?></option>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </select>
                 </div>
                 <div>
                     <label for="term_id">Term</label>
                     <select name="term_id" id="term_id" onchange="this.form.submit()">
                         <option value="">All Terms</option>
-                        @foreach($terms as $term)
-                            <option value="{{ $term->id }}" {{ request('term_id') == $term->id ? 'selected' : '' }}>{{ $term->name }}</option>
-                        @endforeach
+                        <?php $__currentLoopData = $terms; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $term): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($term->id); ?>" <?php echo e(request('term_id') == $term->id ? 'selected' : ''); ?>><?php echo e($term->name); ?></option>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </select>
                 </div>
-                @if(!isset($isSchoolStudent) || !$isSchoolStudent)
-                {{-- Only show grade level filter for non-school students --}}
+                <?php if(!isset($isSchoolStudent) || !$isSchoolStudent): ?>
+                
                 <div>
                     <label for="grade_level">Grade Level</label>
                     <select name="grade_level" id="grade_level" onchange="this.form.submit()">
                         <option value="">All Grades</option>
-                        <option value="O Level" {{ request('grade_level') == 'O Level' ? 'selected' : '' }}>O Level</option>
-                        <option value="A Level" {{ request('grade_level') == 'A Level' ? 'selected' : '' }}>A Level</option>
+                        <option value="O Level" <?php echo e(request('grade_level') == 'O Level' ? 'selected' : ''); ?>>O Level</option>
+                        <option value="A Level" <?php echo e(request('grade_level') == 'A Level' ? 'selected' : ''); ?>>A Level</option>
                     </select>
                 </div>
-                @endif
+                <?php endif; ?>
                 <div>
                     <label for="search">Search</label>
-                    <input type="text" name="search" id="search" value="{{ request('search') }}" placeholder="Search by title or description" onblur="this.form.submit()">
+                    <input type="text" name="search" id="search" value="<?php echo e(request('search')); ?>" placeholder="Search by title or description" onblur="this.form.submit()">
                 </div>
             </div>
             <div class="my-videos-filters-actions">
-                <a href="{{ route('student.my-videos') }}" class="my-videos-reset">Reset Filters</a>
+                <a href="<?php echo e(route('student.my-videos')); ?>" class="my-videos-reset">Reset Filters</a>
             </div>
         </form>
     </div>
     <div class="my-videos-grid">
-        @forelse($resources as $resource)
+        <?php $__empty_1 = true; $__currentLoopData = $resources; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $resource): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
             <div class="my-video-card">
                 <div class="my-video-card-body">
-                    <h3 class="my-video-title">{{ $resource->title }}</h3>
-                    <p class="my-video-desc">{{ Str::limit($resource->description, 100) }}</p>
+                    <h3 class="my-video-title"><?php echo e($resource->title); ?></h3>
+                    <p class="my-video-desc"><?php echo e(Str::limit($resource->description, 100)); ?></p>
                     <div class="my-video-tags">
-                        @if($resource->grade_level)
-                            <span class="my-video-tag my-video-tag-blue">{{ $resource->grade_level }}</span>
-                        @endif
-                        @if($resource->subject_name ?? $resource->subject->name ?? null)
-                            <span class="my-video-tag my-video-tag-green">{{ $resource->subject_name ?? $resource->subject->name }}</span>
-                        @endif
-                        @if($resource->term_name ?? $resource->term->name ?? null)
-                            <span class="my-video-tag my-video-tag-purple">{{ $resource->term_name ?? $resource->term->name }}</span>
-                        @endif
-                        @if($resource->class_name ?? $resource->classRoom->name ?? null)
-                            <span class="my-video-tag my-video-tag-yellow">{{ $resource->class_name ?? $resource->classRoom->name }}</span>
-                        @endif
+                        <?php if($resource->grade_level): ?>
+                            <span class="my-video-tag my-video-tag-blue"><?php echo e($resource->grade_level); ?></span>
+                        <?php endif; ?>
+                        <?php if($resource->subject_name ?? $resource->subject->name ?? null): ?>
+                            <span class="my-video-tag my-video-tag-green"><?php echo e($resource->subject_name ?? $resource->subject->name); ?></span>
+                        <?php endif; ?>
+                        <?php if($resource->term_name ?? $resource->term->name ?? null): ?>
+                            <span class="my-video-tag my-video-tag-purple"><?php echo e($resource->term_name ?? $resource->term->name); ?></span>
+                        <?php endif; ?>
+                        <?php if($resource->class_name ?? $resource->classRoom->name ?? null): ?>
+                            <span class="my-video-tag my-video-tag-yellow"><?php echo e($resource->class_name ?? $resource->classRoom->name); ?></span>
+                        <?php endif; ?>
                     </div>
                     <div class="my-video-footer">
-                        <a href="{{ route('student.my-videos.show', $resource->id) }}" class="my-video-btn">
+                        <a href="<?php echo e(route('student.my-videos.show', $resource->id)); ?>" class="my-video-btn">
                             <i class="fas fa-play"></i> Watch Video
                         </a>
                         <div class="my-video-meta">
-                            @if(in_array(session('user_type'), ['teacher', 'subject_teacher']))
-                                @if(isset($resource->unreplied_comments_count) && $resource->unreplied_comments_count > 0)
+                            <?php if(in_array(session('user_type'), ['teacher', 'subject_teacher'])): ?>
+                                <?php if(isset($resource->unreplied_comments_count) && $resource->unreplied_comments_count > 0): ?>
                                     <span class="unreplied-comments-badge" title="Unreplied student comments">
-                                        <i class="fas fa-comment-exclamation"></i> {{ $resource->unreplied_comments_count }}
+                                        <i class="fas fa-comment-exclamation"></i> <?php echo e($resource->unreplied_comments_count); ?>
+
                                     </span>
-                                @endif
-                                @if(isset($resource->replied_comments_count) && $resource->replied_comments_count > 0)
+                                <?php endif; ?>
+                                <?php if(isset($resource->replied_comments_count) && $resource->replied_comments_count > 0): ?>
                                     <span class="replied-comments-badge" title="Replied student comments">
-                                        <i class="fas fa-comment-check"></i> {{ $resource->replied_comments_count }}
+                                        <i class="fas fa-comment-check"></i> <?php echo e($resource->replied_comments_count); ?>
+
                                     </span>
-                                @endif
-                            @endif
-                            <span class="my-video-date">{{ $resource->created_at->diffForHumans() }}</span>
+                                <?php endif; ?>
+                            <?php endif; ?>
+                            <span class="my-video-date"><?php echo e($resource->created_at->diffForHumans()); ?></span>
                         </div>
                     </div>
                 </div>
             </div>
-        @empty
+        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
             <div class="my-videos-empty">
                 <i class="fas fa-video"></i>
                 <p>
-                    @if(in_array(session('user_type'), ['teacher', 'subject_teacher'])) 
+                    <?php if(in_array(session('user_type'), ['teacher', 'subject_teacher'])): ?> 
                         You haven't created any videos yet.
-                    @elseif(isset($isSchoolStudent) && $isSchoolStudent)
+                    <?php elseif(isset($isSchoolStudent) && $isSchoolStudent): ?>
                         No videos available for your school yet. Please contact your school administrator.
-                    @else 
+                    <?php else: ?> 
                         No videos available for your preferences.
-                    @endif
+                    <?php endif; ?>
                 </p>
             </div>
-        @endforelse
+        <?php endif; ?>
     </div>
     <div class="my-videos-pagination">
-        @if ($resources->hasPages())
+        <?php if($resources->hasPages()): ?>
             <nav>
                 <ul class="pagination">
-                    {{-- Previous Page Link --}}
-                    @if ($resources->onFirstPage())
+                    
+                    <?php if($resources->onFirstPage()): ?>
                         <li class="page-item disabled">
                             <span class="page-link">Previous</span>
                         </li>
-                    @else
+                    <?php else: ?>
                         <li class="page-item">
-                            <a class="page-link" href="{{ $resources->previousPageUrl() }}" rel="prev">Previous</a>
+                            <a class="page-link" href="<?php echo e($resources->previousPageUrl()); ?>" rel="prev">Previous</a>
                         </li>
-                    @endif
+                    <?php endif; ?>
 
-                    {{-- Pagination Elements --}}
-                    @foreach ($resources->getUrlRange(1, $resources->lastPage()) as $page => $url)
-                        @if ($page == $resources->currentPage())
+                    
+                    <?php $__currentLoopData = $resources->getUrlRange(1, $resources->lastPage()); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $page => $url): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <?php if($page == $resources->currentPage()): ?>
                             <li class="page-item active">
-                                <span class="page-link">{{ $page }}</span>
+                                <span class="page-link"><?php echo e($page); ?></span>
                             </li>
-                        @else
+                        <?php else: ?>
                             <li class="page-item">
-                                <a class="page-link" href="{{ $url }}">{{ $page }}</a>
+                                <a class="page-link" href="<?php echo e($url); ?>"><?php echo e($page); ?></a>
                             </li>
-                        @endif
-                    @endforeach
+                        <?php endif; ?>
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
 
-                    {{-- Next Page Link --}}
-                    @if ($resources->hasMorePages())
+                    
+                    <?php if($resources->hasMorePages()): ?>
                         <li class="page-item">
-                            <a class="page-link" href="{{ $resources->nextPageUrl() }}" rel="next">Next</a>
+                            <a class="page-link" href="<?php echo e($resources->nextPageUrl()); ?>" rel="next">Next</a>
                         </li>
-                    @else
+                    <?php else: ?>
                         <li class="page-item disabled">
                             <span class="page-link">Next</span>
                         </li>
-                    @endif
+                    <?php endif; ?>
                 </ul>
             </nav>
-        @endif
+        <?php endif; ?>
     </div>
 </div>
 <style>
@@ -475,4 +475,5 @@
     }
 }
 </style>
-@endsection 
+<?php $__env->stopSection(); ?> 
+<?php echo $__env->make('layouts.student-dashboard', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Users\user\Desktop\naff-tech-accademy-4.8-team\resources\views/student/my-videos.blade.php ENDPATH**/ ?>

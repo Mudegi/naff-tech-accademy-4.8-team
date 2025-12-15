@@ -264,6 +264,9 @@ Route::prefix('admin')->middleware(['auth', 'single.session'])->group(function (
     Route::get('/api/subjects/{subject}/topics', [\App\Http\Controllers\Admin\TopicController::class, 'topicsBySubject']);
     Route::get('admin/api/teachers', [\App\Http\Controllers\Admin\ResourceController::class, 'getTeachersBySubjectAndClass'])->name('admin.api.teachers');
 
+    // Bulk Resource Assignment (Super Admin Only)
+    Route::post('resources/bulk-assign', [\App\Http\Controllers\Admin\ResourceController::class, 'bulkAssign'])->name('admin.resources.bulk-assign');
+
     // Subscription Management
 
     Route::resource('subscription-packages', \App\Http\Controllers\Admin\SubscriptionPackageController::class, [
@@ -427,6 +430,7 @@ Route::middleware(['auth', 'single.session', \App\Http\Middleware\CheckAccountTy
 
     // My Videos Route
     Route::get('/my-videos', [App\Http\Controllers\UserPreferenceController::class, 'myVideos'])->name('my-videos');
+    Route::get('/debug-my-videos', [App\Http\Controllers\UserPreferenceController::class, 'debugMyVideos'])->name('debug-my-videos');
     Route::get('/my-videos/{resource}', [App\Http\Controllers\UserPreferenceController::class, 'showMyVideo'])->name('my-videos.show');
     
     // Teacher Assessment Upload Route

@@ -127,13 +127,9 @@
                     <thead>
                         <tr>
                             <th>ID</th>
-                            <th>Student Name</th>
-                            <th>Student Email</th>
-                            <th>Student Phone</th>
-                            <th>Parent Name</th>
-                            <th>Parent Email</th>
-                            <th>Parent Phone</th>
-                            <th>Default Password</th>
+                            <th>Student Info</th>
+                            <th>Parent Info</th>
+                            <th>Access Details</th>
                             <th>Status</th>
                         </tr>
                     </thead>
@@ -146,36 +142,44 @@
                                             <td rowspan="{{ $student->parentLinks->count() }}">
                                                 <span class="badge badge-secondary">{{ $student->id }}</span>
                                             </td>
-                                            <td rowspan="{{ $student->parentLinks->count() }}">
-                                                <strong>{{ $student->name }}</strong>
-                                                @if($student->school)
-                                                    <br><small class="text-muted">{{ $student->school->name }}</small>
-                                                @endif
-                                            </td>
-                                            <td rowspan="{{ $student->parentLinks->count() }}">
-                                                {{ $student->email ?? '-' }}
-                                            </td>
-                                            <td rowspan="{{ $student->parentLinks->count() }}">
-                                                {{ $student->phone_number ?? '-' }}
+                                            <td rowspan="{{ $student->parentLinks->count() }}" class="student-info-cell">
+                                                <div class="student-name">
+                                                    <strong>{{ $student->name }}</strong>
+                                                    @if($student->school)
+                                                        <br><small class="text-muted">{{ $student->school->name }}</small>
+                                                    @endif
+                                                </div>
+                                                <div class="student-contact">
+                                                    <small>
+                                                        @if($student->email)<i class="fas fa-envelope"></i> {{ $student->email }}@endif
+                                                        @if($student->phone_number)<br><i class="fas fa-phone"></i> {{ $student->phone_number }}@endif
+                                                    </small>
+                                                </div>
                                             </td>
                                         @endif
-                                        <td>
-                                            <strong>{{ $link->parent_name }}</strong>
-                                            <br><span class="badge badge-info">{{ ucfirst($link->relationship) }}</span>
+                                        <td class="parent-info-cell">
+                                            <div class="parent-name">
+                                                <strong>{{ $link->parent_name }}</strong>
+                                                <br><span class="badge badge-info">{{ ucfirst($link->relationship) }}</span>
+                                            </div>
+                                            <div class="parent-contact">
+                                                <small>
+                                                    @if($link->parent_email)<i class="fas fa-envelope"></i> {{ $link->parent_email }}@endif
+                                                    @if($link->parent_phone)<br><i class="fas fa-phone"></i> {{ $link->parent_phone }}@endif
+                                                </small>
+                                            </div>
                                         </td>
-                                        <td>{{ $link->parent_email ?? '-' }}</td>
-                                        <td>{{ $link->parent_phone ?? '-' }}</td>
                                         @if($index === 0)
-                                            <td rowspan="{{ $student->parentLinks->count() }}">
-                                                <code style="background: #f0f0f0; padding: 4px 8px; border-radius: 4px; font-size: 12px;">
-                                                    {{ $student->phone_number ?: 'parent123' }}
-                                                </code>
-                                                <button class="btn-icon" 
-                                                        onclick="copyPassword('{{ $student->phone_number ?: 'parent123' }}')"
-                                                        title="Copy password"
-                                                        style="background: none; border: none; color: #667eea; cursor: pointer; padding: 4px 8px;">
-                                                    <i class="fas fa-copy"></i>
-                                                </button>
+                                            <td rowspan="{{ $student->parentLinks->count() }}" class="access-details-cell">
+                                                <div class="password-section">
+                                                    <small><strong>Password:</strong></small><br>
+                                                    <code class="password-code">{{ $student->phone_number ?: 'parent123' }}</code>
+                                                    <button class="btn-icon copy-btn" 
+                                                            onclick="copyPassword('{{ $student->phone_number ?: 'parent123' }}')"
+                                                            title="Copy password">
+                                                        <i class="fas fa-copy"></i>
+                                                    </button>
+                                                </div>
                                             </td>
                                             <td rowspan="{{ $student->parentLinks->count() }}">
                                                 <span class="status-badge status-active">✓ Linked</span>
@@ -186,16 +190,23 @@
                             @else
                                 <tr>
                                     <td><span class="badge badge-secondary">{{ $student->id }}</span></td>
-                                    <td>
-                                        <strong>{{ $student->name }}</strong>
-                                        @if($student->school)
-                                            <br><small class="text-muted">{{ $student->school->name }}</small>
-                                        @endif
+                                    <td class="student-info-cell">
+                                        <div class="student-name">
+                                            <strong>{{ $student->name }}</strong>
+                                            @if($student->school)
+                                                <br><small class="text-muted">{{ $student->school->name }}</small>
+                                            @endif
+                                        </div>
+                                        <div class="student-contact">
+                                            <small>
+                                                @if($student->email)<i class="fas fa-envelope"></i> {{ $student->email }}@endif
+                                                @if($student->phone_number)<br><i class="fas fa-phone"></i> {{ $student->phone_number }}@endif
+                                            </small>
+                                        </div>
                                     </td>
-                                    <td>{{ $student->email ?? '-' }}</td>
-                                    <td>{{ $student->phone_number ?? '-' }}</td>
-                                    <td colspan="3" class="text-center">-</td>
-                                    <td>-</td>
+                                    <td colspan="2" class="text-center parent-missing">
+                                        <em>No parent account linked</em>
+                                    </td>
                                     <td><span class="status-badge status-warning">⚠ Missing</span></td>
                                 </tr>
                             @endif
@@ -206,7 +217,7 @@
                 <table class="dashboard-table">
                     <tbody>
                         <tr>
-                            <td colspan="9" class="text-center" style="padding: 60px;">
+                            <td colspan="5" class="text-center" style="padding: 60px;">
                                 <i class="fas fa-users" style="font-size: 48px; color: #ccc;"></i>
                                 <p style="color: #999; margin-top: 16px; font-size: 16px;">No students found</p>
                             </td>
@@ -242,4 +253,166 @@ function copyPassword(password) {
     alert('Password copied: ' + password);
 }
 </script>
+
+<style>
+/* Compact Student-Parent Table Styles */
+.student-info-cell,
+.parent-info-cell {
+    max-width: 200px;
+}
+
+.student-name,
+.parent-name {
+    margin-bottom: 4px;
+}
+
+.student-contact,
+.parent-contact {
+    color: #6b7280;
+    font-size: 0.875rem;
+}
+
+.student-contact i,
+.parent-contact i {
+    width: 14px;
+    color: #9ca3af;
+}
+
+.parent-missing {
+    color: #6b7280;
+    font-style: italic;
+}
+
+.access-details-cell {
+    max-width: 150px;
+}
+
+.password-section {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.password-code {
+    background: #f3f4f6;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-family: monospace;
+    color: #374151;
+}
+
+.copy-btn {
+    background: none;
+    border: none;
+    color: #6b7280;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.copy-btn:hover {
+    background: #f3f4f6;
+    color: #2563eb;
+}
+
+/* Status badges */
+.status-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.status-active {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.status-warning {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .student-info-cell,
+    .parent-info-cell,
+    .access-details-cell {
+        max-width: 150px;
+    }
+    
+    .student-contact,
+    .parent-contact {
+        font-size: 0.8rem;
+    }
+    
+    .password-section {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+}
+
+/* Table container improvements */
+.dashboard-table-container {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    margin-bottom: 24px;
+}
+
+.dashboard-table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.dashboard-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+    min-width: 800px; /* Ensure minimum width for readability */
+}
+
+.dashboard-table th {
+    background: #f9fafb;
+    padding: 12px 16px;
+    text-align: left;
+    font-weight: 600;
+    color: #374151;
+    border-bottom: 2px solid #e5e7eb;
+    white-space: nowrap;
+}
+
+.dashboard-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f3f4f6;
+    vertical-align: top;
+}
+
+/* Badge styles */
+.badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.badge-secondary {
+    background: #f3f4f6;
+    color: #6b7280;
+}
+
+.badge-info {
+    background: #dbeafe;
+    color: #1e40af;
+}
+</style>
+
 @endsection

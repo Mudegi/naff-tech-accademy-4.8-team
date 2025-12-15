@@ -1,7 +1,5 @@
-@extends('layouts.dashboard')
-
-@section('content')
-@php
+<?php $__env->startSection('content'); ?>
+<?php
     $user = Auth::user();
     $userPermissions = [];
     $isAdmin = false;
@@ -21,31 +19,33 @@
             $userPermissions = array_unique(array_merge($userPermissions, $allPermissions));
         }
     }
-@endphp
+?>
 <div class="dashboard-content-inner">
     <div class="dashboard-breadcrumbs">
         <h1 class="dashboard-title">Resources</h1>
-        @if(in_array('create_resource', $userPermissions) || $isAdmin)
-        <a href="{{ route('admin.resources.create') }}" class="dashboard-btn dashboard-btn-primary">
+        <?php if(in_array('create_resource', $userPermissions) || $isAdmin): ?>
+        <a href="<?php echo e(route('admin.resources.create')); ?>" class="dashboard-btn dashboard-btn-primary">
             <i class="fas fa-plus"></i> Add Resource
         </a>
-        @endif
+        <?php endif; ?>
     </div>
 
-    @if(session('success'))
+    <?php if(session('success')): ?>
         <div class="dashboard-alert dashboard-alert-success">
-            {{ session('success') }}
-        </div>
-    @endif
+            <?php echo e(session('success')); ?>
 
-    @if(session('error'))
-        <div class="dashboard-alert dashboard-alert-error">
-            {{ session('error') }}
         </div>
-    @endif
+    <?php endif; ?>
+
+    <?php if(session('error')): ?>
+        <div class="dashboard-alert dashboard-alert-error">
+            <?php echo e(session('error')); ?>
+
+        </div>
+    <?php endif; ?>
 
     <!-- Bulk Actions Bar (Super Admin Only) -->
-    @if($isAdmin && !$user->school_id)
+    <?php if($isAdmin && !$user->school_id): ?>
     <div class="bulk-actions-bar" id="bulkActionsBar" style="display: none; background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e9ecef;">
         <div class="bulk-actions-content" style="display: flex; justify-content: space-between; align-items: center;">
             <div class="selection-info">
@@ -61,145 +61,151 @@
             </div>
         </div>
     </div>
-    @endif
+    <?php endif; ?>
 
     <div class="dashboard-card">
-        <form action="{{ route('admin.resources.index') }}" method="GET" class="filters-form">
+        <form action="<?php echo e(route('admin.resources.index')); ?>" method="GET" class="filters-form">
             <div class="filters-grid">
                 <div class="filter-group">
-                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Search resources..." class="filter-input">
+                    <input type="text" name="search" value="<?php echo e(request('search')); ?>" placeholder="Search resources..." class="filter-input">
                 </div>
                 <div class="filter-group">
                     <select name="subject" class="filter-select" onchange="this.form.submit()">
                         <option value="">All Subjects</option>
-                        @foreach($subjects as $subject)
-                            <option value="{{ $subject->id }}" {{ request('subject') == $subject->id ? 'selected' : '' }}>
-                                {{ $subject->name }}
+                        <?php $__currentLoopData = $subjects; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $subject): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($subject->id); ?>" <?php echo e(request('subject') == $subject->id ? 'selected' : ''); ?>>
+                                <?php echo e($subject->name); ?>
+
                             </option>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </select>
                 </div>
                 <div class="filter-group">
                     <select name="topic" class="filter-select" onchange="this.form.submit()">
                         <option value="">All Topics</option>
-                        @foreach($topics as $topic)
-                            <option value="{{ $topic->id }}" {{ request('topic') == $topic->id ? 'selected' : '' }}>
-                                {{ $topic->name }}
+                        <?php $__currentLoopData = $topics; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $topic): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($topic->id); ?>" <?php echo e(request('topic') == $topic->id ? 'selected' : ''); ?>>
+                                <?php echo e($topic->name); ?>
+
                             </option>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </select>
                 </div>
                 <div class="filter-group">
                     <select name="grade_level" class="filter-select" onchange="this.form.submit()">
                         <option value="">All Classes</option>
-                        @foreach($gradeLevels as $level)
-                            <option value="{{ $level }}" {{ request('grade_level') == $level ? 'selected' : '' }}>
-                                {{ $level }}
+                        <?php $__currentLoopData = $gradeLevels; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $level): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($level); ?>" <?php echo e(request('grade_level') == $level ? 'selected' : ''); ?>>
+                                <?php echo e($level); ?>
+
                             </option>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </select>
                 </div>
                 <div class="filter-group">
                     <select name="term" class="filter-select" onchange="this.form.submit()">
                         <option value="">All Terms</option>
-                        @foreach($terms as $term)
-                            <option value="{{ $term->id }}" {{ request('term') == $term->id ? 'selected' : '' }}>
-                                {{ $term->name }}
+                        <?php $__currentLoopData = $terms; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $term): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($term->id); ?>" <?php echo e(request('term') == $term->id ? 'selected' : ''); ?>>
+                                <?php echo e($term->name); ?>
+
                             </option>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </select>
                 </div>
                 <div class="filter-group">
                     <select name="teacher" class="filter-select" onchange="this.form.submit()">
                         <option value="">All Teachers</option>
-                        @foreach($teachers as $teacher)
-                            <option value="{{ $teacher->id }}" {{ request('teacher') == $teacher->id ? 'selected' : '' }}>
-                                {{ $teacher->name }}
+                        <?php $__currentLoopData = $teachers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $teacher): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($teacher->id); ?>" <?php echo e(request('teacher') == $teacher->id ? 'selected' : ''); ?>>
+                                <?php echo e($teacher->name); ?>
+
                             </option>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </select>
                 </div>
                 <div class="filter-group">
                     <button type="submit" class="filter-btn">
                         <i class="fas fa-search"></i> Search
                     </button>
-                    @if(request()->hasAny(['search', 'subject', 'topic', 'grade_level', 'term', 'teacher']))
-                        <a href="{{ route('admin.resources.index') }}" class="filter-btn filter-btn-secondary">
+                    <?php if(request()->hasAny(['search', 'subject', 'topic', 'grade_level', 'term', 'teacher'])): ?>
+                        <a href="<?php echo e(route('admin.resources.index')); ?>" class="filter-btn filter-btn-secondary">
                             <i class="fas fa-times"></i> Clear
                         </a>
-                    @endif
+                    <?php endif; ?>
                 </div>
             </div>
         </form>
 
         <div class="resources-grid">
-            @forelse($resources as $resource)
+            <?php $__empty_1 = true; $__currentLoopData = $resources; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $resource): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                 <div class="resource-card">
                     <!-- Checkbox for bulk selection (Super Admin Only) -->
-                    @if($isAdmin && !$user->school_id)
+                    <?php if($isAdmin && !$user->school_id): ?>
                     <div class="resource-checkbox" style="position: absolute; top: 10px; right: 10px; z-index: 10;">
-                        <input type="checkbox" class="resource-select-checkbox" value="{{ $resource->hash_id }}" id="checkbox-{{ $resource->id }}" onchange="updateBulkActions()">
-                        <label for="checkbox-{{ $resource->id }}" style="position: absolute; top: 0; right: 0; width: 20px; height: 20px; cursor: pointer;"></label>
+                        <input type="checkbox" class="resource-select-checkbox" value="<?php echo e($resource->hash_id); ?>" id="checkbox-<?php echo e($resource->id); ?>" onchange="updateBulkActions()">
+                        <label for="checkbox-<?php echo e($resource->id); ?>" style="position: absolute; top: 0; right: 0; width: 20px; height: 20px; cursor: pointer;"></label>
                     </div>
-                    @endif
+                    <?php endif; ?>
                     
                     <div class="resource-header">
-                        <h3 class="resource-title">{{ $resource->title }}</h3>
-                        <p class="resource-description">{{ Str::limit($resource->description, 100) }}</p>
+                        <h3 class="resource-title"><?php echo e($resource->title); ?></h3>
+                        <p class="resource-description"><?php echo e(Str::limit($resource->description, 100)); ?></p>
                     </div>
                     <div class="resource-tags">
-                        <span class="resource-tag grade-level">{{ $resource->grade_level }}</span>
-                        <span class="resource-tag subject">{{ $resource->subject->name }}</span>
-                        <span class="resource-tag term">{{ $resource->term->name }}</span>
-                        @if($resource->teacher)
-                            <span class="resource-tag teacher">{{ $resource->teacher->name }}</span>
-                        @endif
+                        <span class="resource-tag grade-level"><?php echo e($resource->grade_level); ?></span>
+                        <span class="resource-tag subject"><?php echo e($resource->subject->name); ?></span>
+                        <span class="resource-tag term"><?php echo e($resource->term->name); ?></span>
+                        <?php if($resource->teacher): ?>
+                            <span class="resource-tag teacher"><?php echo e($resource->teacher->name); ?></span>
+                        <?php endif; ?>
                     </div>
                     <div class="resource-footer">
                         <div class="resource-actions">
-                            @if(in_array('view_resource', $userPermissions) || $isAdmin)
-                            <a href="{{ route('admin.resources.show', $resource->hash_id) }}" class="action-btn view-btn" title="View">
+                            <?php if(in_array('view_resource', $userPermissions) || $isAdmin): ?>
+                            <a href="<?php echo e(route('admin.resources.show', $resource->hash_id)); ?>" class="action-btn view-btn" title="View">
                                 <i class="fas fa-eye"></i>
                             </a>
-                            @endif
-                            @if(in_array('edit_resource', $userPermissions) || $isAdmin)
-                            <a href="{{ route('admin.resources.edit', $resource->hash_id) }}" class="action-btn edit-btn" title="Edit">
+                            <?php endif; ?>
+                            <?php if(in_array('edit_resource', $userPermissions) || $isAdmin): ?>
+                            <a href="<?php echo e(route('admin.resources.edit', $resource->hash_id)); ?>" class="action-btn edit-btn" title="Edit">
                                 <i class="fas fa-edit"></i>
                             </a>
-                            @endif
-                            @if(in_array('delete_resource', $userPermissions) || $isAdmin)
-                            <form action="{{ route('admin.resources.destroy', $resource->hash_id) }}" method="POST" class="delete-form">
-                                @csrf
-                                @method('DELETE')
+                            <?php endif; ?>
+                            <?php if(in_array('delete_resource', $userPermissions) || $isAdmin): ?>
+                            <form action="<?php echo e(route('admin.resources.destroy', $resource->hash_id)); ?>" method="POST" class="delete-form">
+                                <?php echo csrf_field(); ?>
+                                <?php echo method_field('DELETE'); ?>
                                 <button type="submit" class="action-btn delete-btn" title="Delete" onclick="return confirm('Are you sure you want to delete this resource?')">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </form>
-                            @endif
+                            <?php endif; ?>
                         </div>
-                        <span class="resource-date">{{ $resource->created_at->diffForHumans() }}</span>
+                        <span class="resource-date"><?php echo e($resource->created_at->diffForHumans()); ?></span>
                     </div>
                 </div>
-            @empty
+            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                 <div class="no-resources">
                     <p>No resources found.</p>
                 </div>
-            @endforelse
+            <?php endif; ?>
         </div>
     </div>
 
     <div class="dashboard-pagination">
-        {{ $resources->links('vendor.pagination.simple-default') }}
+        <?php echo e($resources->links('vendor.pagination.simple-default')); ?>
+
     </div>
-    <form method="GET" action="{{ route('admin.resources.index') }}" id="perPageForm" style="margin-top: 20px; display: flex; justify-content: center; align-items: center; gap: 10px;">
-        @foreach(request()->except('per_page', 'page') as $key => $value)
-            <input type="hidden" name="{{ $key }}" value="{{ $value }}">
-        @endforeach
+    <form method="GET" action="<?php echo e(route('admin.resources.index')); ?>" id="perPageForm" style="margin-top: 20px; display: flex; justify-content: center; align-items: center; gap: 10px;">
+        <?php $__currentLoopData = request()->except('per_page', 'page'); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $key => $value): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+            <input type="hidden" name="<?php echo e($key); ?>" value="<?php echo e($value); ?>">
+        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
         <label for="per_page" style="font-weight: 500;">Show per page:</label>
         <select name="per_page" id="per_page" onchange="document.getElementById('perPageForm').submit();" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #e5e7eb;">
-            @foreach([10, 20, 30, 50, 100] as $limit)
-                <option value="{{ $limit }}" {{ request('per_page', 12) == $limit ? 'selected' : '' }}>{{ $limit }}</option>
-            @endforeach
+            <?php $__currentLoopData = [10, 20, 30, 50, 100]; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $limit): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                <option value="<?php echo e($limit); ?>" <?php echo e(request('per_page', 12) == $limit ? 'selected' : ''); ?>><?php echo e($limit); ?></option>
+            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
         </select>
     </form>
 </div>
@@ -621,7 +627,7 @@
 </style>
 
 <!-- Bulk Assignment Modal (Super Admin Only) -->
-@if($isAdmin && !$user->school_id)
+<?php if($isAdmin && !$user->school_id): ?>
 <div id="bulkAssignModal" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
     <div class="modal-content" style="background-color: #fefefe; margin: 5% auto; padding: 0; border: 1px solid #888; width: 90%; max-width: 600px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
         <div class="modal-header" style="padding: 20px; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center;">
@@ -629,8 +635,8 @@
             <button type="button" onclick="closeBulkAssignModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #6b7280;">&times;</button>
         </div>
         
-        <form id="bulkAssignForm" action="{{ route('admin.resources.bulk-assign') }}" method="POST" style="padding: 20px;">
-            @csrf
+        <form id="bulkAssignForm" action="<?php echo e(route('admin.resources.bulk-assign')); ?>" method="POST" style="padding: 20px;">
+            <?php echo csrf_field(); ?>
             <div id="selectedResourcesList" style="margin-bottom: 20px; max-height: 200px; overflow-y: auto; padding: 10px; background: #f8f9fa; border-radius: 6px;">
                 <p style="margin: 0; font-weight: 500; color: #2c3e50;">Selected Resources:</p>
                 <div id="selectedResourcesItems" style="margin-top: 10px;">
@@ -641,9 +647,9 @@
             <div class="form-group" style="margin-bottom: 20px;">
                 <label for="schoolSelect" style="display: block; margin-bottom: 8px; font-weight: 500; color: #2c3e50;">Select Schools:</label>
                 <select id="schoolSelect" name="school_ids[]" multiple required style="width: 100%; min-height: 120px; padding: 8px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 14px;">
-                    @foreach(\App\Models\School::orderBy('name')->get() as $school)
-                        <option value="{{ $school->id }}">{{ $school->name }}</option>
-                    @endforeach
+                    <?php $__currentLoopData = \App\Models\School::orderBy('name')->get(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $school): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <option value="<?php echo e($school->id); ?>"><?php echo e($school->name); ?></option>
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                 </select>
                 <small style="color: #6b7280; font-size: 12px;">Hold Ctrl (Cmd on Mac) to select multiple schools</small>
             </div>
@@ -655,7 +661,7 @@
         </form>
     </div>
 </div>
-@endif
+<?php endif; ?>
 
 <script>
 // Bulk selection functionality
@@ -724,4 +730,5 @@ window.onclick = function(event) {
 }
 </script>
 
-@endsection 
+<?php $__env->stopSection(); ?> 
+<?php echo $__env->make('layouts.dashboard', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Users\user\Desktop\naff-tech-accademy-4.8-team\resources\views/admin/resources/index.blade.php ENDPATH**/ ?>

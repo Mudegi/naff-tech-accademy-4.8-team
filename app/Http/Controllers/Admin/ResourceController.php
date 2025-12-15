@@ -535,4 +535,53 @@ class ResourceController extends Controller
         $teachers = $query->orderBy('name')->get(['id', 'name']);
         return response()->json($teachers);
     }
+
+    public function bulkAssign(Request $request)
+    {
+        $validated = $request->validate([
+            'resource_ids' => 'required|array|min:1',
+            'resource_ids.*' => 'required|string',
+            'school_ids' => 'required|array|min:1',
+            'school_ids.*' => 'required|exists:schools,id',
+        ]);
+
+        $user = Auth::user();
+        
+        // Only super admin can perform bulk assignment
+        if ($user->account_type !== 'admin' || $user->school_id) {
+            abort(403, 'Access denied. Only super administrators can perform bulk resource assignment.');
+        }
+
+        $resourceIds = [];
+        foreach ($validated['resource_ids'] as $hashId) {
+            $resource = Resource::findByHashId($hashId);
+            if ($resource) {
+                $resourceIds[] = $resource->id;
+            }
+        }
+
+        if (empty($resourceIds)) {
+            return redirect()->back()->with('error', 'No valid resources found.');
+        }
+
+        $assignedCount = 0;
+        foreach ($resourceIds as $resourceId) {
+            $resource = Resource::find($resourceId);
+            if ($resource) {
+                // Get current school assignments
+                $currentSchoolIds = $resource->schools()->pluck('schools.id')->toArray();
+                
+                // Add new school assignments (avoid duplicates)
+                $newSchoolIds = array_unique(array_merge($currentSchoolIds, $validated['school_ids']));
+                
+                // Sync schools
+                $resource->schools()->sync($newSchoolIds);
+                $assignedCount++;
+            }
+        }
+
+        $schoolNames = School::whereIn('id', $validated['school_ids'])->pluck('name')->join(', ');
+        
+        return redirect()->back()->with('success', "Successfully assigned {$assignedCount} resource(s) to: {$schoolNames}");
+    }
 } 

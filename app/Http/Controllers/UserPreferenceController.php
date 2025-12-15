@@ -256,82 +256,93 @@ class UserPreferenceController extends Controller
         
         // School students don't need preferences or subscriptions - they get free access
         if ($isSchoolStudent) {
-            // Get student's class directly from database - simple and reliable
-            $studentClassId = \DB::table('class_user')
-                ->where('user_id', $user->id)
-                ->value('class_id');
+            // Determine student's grade level (O Level or A Level)
+            $studentGradeLevel = $this->getStudentGradeLevel($user);
             
-            $studentClass = null;
-            if ($studentClassId) {
-                $studentClass = \App\Models\SchoolClass::find($studentClassId);
-            }
-            
-            // School students see videos assigned via direct school_id OR via pivot table
-            $query = \App\Models\Resource::with(['subject', 'term', 'topic', 'classRoom'])
-                ->where('is_active', true)
-                ->whereNotNull('google_drive_link')
-                ->where(function($q) use ($user) {
-                    $q->where('school_id', $user->school_id)
-                      ->orWhereHas('schools', function($subQuery) use ($user) {
-                          $subQuery->where('schools.id', $user->school_id);
-                      });
-                });
-            
-            // Filter by student's class - show only videos for their class
-            if ($studentClassId) {
-                $query->where('class_id', $studentClassId);
-            }
-            
-            // For A Level students (Form 5-6), filter by their subject combination
-            if ($studentClass && preg_match('/form\s*[5-6]|s[5-6]/i', strtolower($studentClass->name))) {
-                $combinationSubjects = $this->getStudentCombinationSubjects($user);
-                if ($combinationSubjects !== null && count($combinationSubjects) > 0) {
-                    $query->whereIn('subject_id', $combinationSubjects);
+            if (!$studentGradeLevel) {
+                // If we can't determine grade level, show no resources
+                $resources = collect();
+                $classes = collect();
+                $subjects = collect();
+                $topics = collect();
+                $terms = collect();
+            } else {
+                // School students see ALL resources of their grade level assigned to their school
+                // via direct school_id OR via pivot table, regardless of specific class
+                $query = \App\Models\Resource::query();
+                $query->withoutGlobalScope('school');
+                $query->with(['subject', 'term', 'topic', 'classRoom'])
+                    ->where('is_active', true)
+                    ->where('grade_level', $studentGradeLevel)
+                    ->whereNotNull('google_drive_link')
+                    ->where('google_drive_link', '!=', '')
+                    ->where(function($q) use ($user) {
+                        $q->where('school_id', $user->school_id)
+                          ->orWhereRaw('id in (select resource_id from resource_school where school_id = ?)', [$user->school_id]);
+                    });
+                
+                // For A Level students, filter by their subject combination
+                if ($studentGradeLevel === 'A Level') {
+                    $combinationSubjects = $this->getStudentCombinationSubjects($user);
+                    if ($combinationSubjects !== null && count($combinationSubjects) > 0) {
+                        $query->whereIn('subject_id', $combinationSubjects);
+                    }
                 }
+                
+                // Apply manual filters if selected
+                if ($request->filled('subject_id')) {
+                    $query->where('subject_id', $request->subject_id);
+                }
+                if ($request->filled('topic_id')) {
+                    $query->where('topic_id', $request->topic_id);
+                }
+                if ($request->filled('term_id')) {
+                    $query->where('term_id', $request->term_id);
+                }
+                if ($request->filled('search')) {
+                    $query->where(function($q) use ($request) {
+                        $q->where('title', 'like', '%' . $request->search . '%')
+                          ->orWhere('description', 'like', '%' . $request->search . '%');
+                    });
+                }
+                
+                $resources = $query->latest()->paginate(12);
+                $resources->appends($request->query());
+                
+                // Get filter options from school's resources of the same grade level
+                $baseQuery = \App\Models\Resource::where('is_active', true)
+                    ->where('grade_level', $studentGradeLevel)
+                    ->whereNotNull('google_drive_link')
+                    ->where('google_drive_link', '!=', '')
+                    ->where(function($q) use ($user) {
+                        $q->where('school_id', $user->school_id)
+                          ->orWhereHas('schools', function($subQuery) use ($user) {
+                              $subQuery->where('schools.id', $user->school_id);
+                          });
+                    });
+                
+                // For A Level students, also filter base query by subject combination for filter options
+                if ($studentGradeLevel === 'A Level') {
+                    $combinationSubjects = $this->getStudentCombinationSubjects($user);
+                    if ($combinationSubjects !== null && count($combinationSubjects) > 0) {
+                        $baseQuery->whereIn('subject_id', $combinationSubjects);
+                    }
+                }
+                
+                $subjects = \App\Models\Subject::whereIn('id', 
+                    $baseQuery->pluck('subject_id')->unique()->filter()
+                )->get();
+                
+                $topics = \App\Models\Topic::whereIn('id',
+                    $baseQuery->pluck('topic_id')->unique()->filter()
+                )->get();
+                
+                $terms = \App\Models\Term::whereIn('id',
+                    $baseQuery->pluck('term_id')->unique()->filter()
+                )->get();
+                
+                $classes = collect();
             }
-            
-            // Apply manual filters if selected
-            if ($request->filled('subject_id')) {
-                $query->where('subject_id', $request->subject_id);
-            }
-            if ($request->filled('topic_id')) {
-                $query->where('topic_id', $request->topic_id);
-            }
-            if ($request->filled('term_id')) {
-                $query->where('term_id', $request->term_id);
-            }
-            if ($request->filled('search')) {
-                $query->where(function($q) use ($request) {
-                    $q->where('title', 'like', '%' . $request->search . '%')
-                      ->orWhere('description', 'like', '%' . $request->search . '%');
-                });
-            }
-            
-            $resources = $query->latest()->paginate(12);
-            $resources->appends($request->query());
-            
-            // Get filter options from school's resources
-            $baseQuery = \App\Models\Resource::where('is_active', true)
-                ->where(function($q) use ($user) {
-                    $q->where('school_id', $user->school_id)
-                      ->orWhereHas('schools', function($subQuery) use ($user) {
-                          $subQuery->where('schools.id', $user->school_id);
-                      });
-                });
-            
-            $subjects = \App\Models\Subject::whereIn('id', 
-                $baseQuery->pluck('subject_id')->unique()->filter()
-            )->get();
-            
-            $topics = \App\Models\Topic::whereIn('id',
-                $baseQuery->pluck('topic_id')->unique()->filter()
-            )->get();
-            
-            $terms = \App\Models\Term::whereIn('id',
-                $baseQuery->pluck('term_id')->unique()->filter()
-            )->get();
-            
-            $classes = collect();
         } else {
             // For non-school students, check preferences and subscription
             $preference = $user->preference;
@@ -435,6 +446,9 @@ class UserPreferenceController extends Controller
                 }
             }
         }
+        
+        $resources = $query->latest()->paginate(12);
+        
         return view('student.my-videos', compact('resources', 'classes', 'subjects', 'topics', 'terms', 'isSchoolStudent'));
     }
 
@@ -448,10 +462,15 @@ class UserPreferenceController extends Controller
         
         // School students get free access to their school's resources
         if ($user->account_type === 'student' && $user->school_id) {
-            // Check if resource is assigned to student's school via school_id or pivot table
-            $hasAccess = $resource->school_id === $user->school_id 
-                || $resource->schools->contains('id', $user->school_id)
-                || (!$resource->school_id && $resource->schools->isEmpty()); // Global resources
+            // Check if resource is assigned to student's school
+            $isAssignedToSchool = $resource->school_id === $user->school_id 
+                || $resource->schools->contains('id', $user->school_id);
+            
+            if ($isAssignedToSchool) {
+                // Check if resource grade level matches student's grade level
+                $studentGradeLevel = $this->getStudentGradeLevel($user);
+                $hasAccess = $resource->grade_level === $studentGradeLevel;
+            }
         } else {
             // Check subscription-based access (existing logic)
             $subscription = \App\Models\UserSubscription::where('user_id', $user->id)
@@ -483,6 +502,286 @@ class UserPreferenceController extends Controller
             $driveFileId = $matches[1];
         }
         return view('student.my-videos-show', compact('resource', 'driveFileId'));
+    }
+
+    public function debugMyVideos(Request $request)
+    {
+        $user = Auth::user();
+        $isTeacher = in_array($user->account_type, ['teacher', 'subject_teacher']);
+        
+        if ($isTeacher) {
+            // For teachers, show only videos they created
+            $query = \App\Models\Resource::with(['subject', 'term', 'topic', 'classRoom'])
+                ->where('teacher_id', $user->id)
+                ->whereNotNull('google_drive_link');
+            
+            // Add filter for videos with student comments
+            if ($request->has('filter')) {
+                if ($request->filter === 'unreplied_comments') {
+                    // Videos with student comments that teacher hasn't replied to
+                    $query->whereHas('comments', function($commentQuery) use ($user) {
+                        $commentQuery->whereHas('user', function($userQuery) {
+                            $userQuery->where('account_type', 'student');
+                        })
+                        ->whereNull('parent_id')
+                        ->whereDoesntHave('replies', function($replyQuery) use ($user) {
+                            $replyQuery->whereHas('user', function($userQuery) use ($user) {
+                                $userQuery->where('id', $user->id);
+                            });
+                        });
+                    });
+                } elseif ($request->filter === 'replied_comments') {
+                    // Videos with student comments that teacher has replied to
+                    $query->whereHas('comments', function($commentQuery) use ($user) {
+                        $commentQuery->whereHas('user', function($userQuery) {
+                            $userQuery->where('account_type', 'student');
+                        })
+                        ->whereNull('parent_id')
+                        ->whereHas('replies', function($replyQuery) use ($user) {
+                            $replyQuery->whereHas('user', function($userQuery) use ($user) {
+                                $userQuery->where('id', $user->id);
+                            });
+                        });
+                    });
+                }
+            }
+            
+            $resources = $query->latest()->paginate(12);
+            
+            // Add comment counts to each resource
+            $resources->getCollection()->transform(function($resource) use ($user) {
+                $resource->unreplied_comments_count = $resource->getUnrepliedStudentCommentsCount($user->id);
+                $resource->replied_comments_count = $resource->getRepliedStudentCommentsCount($user->id);
+                return $resource;
+            });
+            
+            $classes = collect();
+            $subjects = collect();
+            $topics = collect();
+            $terms = collect();
+            $isSchoolStudent = false; // Teachers are not school students
+            
+            return view('student.debug-my-videos', compact('resources', 'classes', 'subjects', 'topics', 'terms', 'isSchoolStudent'));
+        }
+        
+        // Check if user is a school student - they get free access to their school's resources
+        // School students have account_type 'student' and a non-null school_id
+        $isSchoolStudent = $user->account_type === 'student' && !is_null($user->school_id) && $user->school_id > 0;
+        
+        // School students don't need preferences or subscriptions - they get free access
+        if ($isSchoolStudent) {
+            // Determine student's grade level (O Level or A Level)
+            $studentGradeLevel = $this->getStudentGradeLevel($user);
+            
+            if (!$studentGradeLevel) {
+                // If we can't determine grade level, show no resources
+                $resources = collect();
+                $classes = collect();
+                $subjects = collect();
+                $topics = collect();
+                $terms = collect();
+            } else {
+                // School students see ALL resources of their grade level assigned to their school
+                // via direct school_id OR via pivot table, regardless of specific class
+                $query = \App\Models\Resource::with(['subject', 'term', 'topic', 'classRoom'])
+                    ->where('is_active', true)
+                    ->where('grade_level', $studentGradeLevel)
+                    ->whereNotNull('google_drive_link')
+                    ->where('google_drive_link', '!=', '')
+                    ->where(function($q) use ($user) {
+                        $q->where('school_id', $user->school_id)
+                          ->orWhereHas('schools', function($subQuery) use ($user) {
+                              $subQuery->where('schools.id', $user->school_id);
+                          });
+                    });
+                
+                // For A Level students, filter by their subject combination
+                if ($studentGradeLevel === 'A Level') {
+                    $combinationSubjects = $this->getStudentCombinationSubjects($user);
+                    if ($combinationSubjects !== null && count($combinationSubjects) > 0) {
+                        $query->whereIn('subject_id', $combinationSubjects);
+                    }
+                }
+                
+                // Apply manual filters if selected
+                if ($request->filled('subject_id')) {
+                    $query->where('subject_id', $request->subject_id);
+                }
+                if ($request->filled('topic_id')) {
+                    $query->where('topic_id', $request->topic_id);
+                }
+                if ($request->filled('term_id')) {
+                    $query->where('term_id', $request->term_id);
+                }
+                if ($request->filled('search')) {
+                    $query->where(function($q) use ($request) {
+                        $q->where('title', 'like', '%' . $request->search . '%')
+                          ->orWhere('description', 'like', '%' . $request->search . '%');
+                    });
+                }
+                
+                $resources = $query->latest()->paginate(12);
+                $resources->appends($request->query());
+                
+                // Get filter options from school's resources of the same grade level
+                $baseQuery = \App\Models\Resource::where('is_active', true)
+                    ->where('grade_level', $studentGradeLevel)
+                    ->whereNotNull('google_drive_link')
+                    ->where('google_drive_link', '!=', '')
+                    ->where(function($q) use ($user) {
+                        $q->where('school_id', $user->school_id)
+                          ->orWhereHas('schools', function($subQuery) use ($user) {
+                              $subQuery->where('schools.id', $user->school_id);
+                          });
+                    });
+                
+                // For A Level students, also filter base query by subject combination for filter options
+                if ($studentGradeLevel === 'A Level') {
+                    $combinationSubjects = $this->getStudentCombinationSubjects($user);
+                    if ($combinationSubjects !== null && count($combinationSubjects) > 0) {
+                        $baseQuery->whereIn('subject_id', $combinationSubjects);
+                    }
+                }
+                
+                $subjects = \App\Models\Subject::whereIn('id', 
+                    $baseQuery->pluck('subject_id')->unique()->filter()
+                )->get();
+                
+                $topics = \App\Models\Topic::whereIn('id',
+                    $baseQuery->pluck('topic_id')->unique()->filter()
+                )->get();
+                
+                $terms = \App\Models\Term::whereIn('id',
+                    $baseQuery->pluck('term_id')->unique()->filter()
+                )->get();
+                
+                $classes = collect();
+            }
+        } else {
+            // For non-school students, check preferences and subscription
+            $preference = $user->preference;
+            
+            // Check if preferences are set
+            if (!$preference) {
+                return redirect()->route('student.preferences.index')
+                    ->with('error', 'Please set your learning preferences before accessing your videos.');
+            }
+
+            $subscription = UserSubscription::where('user_id', $user->id)
+                ->where('is_active', true)
+                ->where('end_date', '>=', now())
+                ->first();
+            
+            // Check if user has no subscription
+            if (!$subscription) {
+                return redirect()->route('pricing')->with('error', 'Please subscribe to access this feature.');
+            }
+            
+            $subscriptionPackage = null;
+            if ($subscription && $subscription->subscription_package_id) {
+                $subscriptionPackage = DB::table('subscription_packages')->where('id', $subscription->subscription_package_id)->first();
+            }
+            
+            $classes = \App\Models\SchoolClass::all();
+            $subjects = collect();
+            $topics = collect();
+            $terms = \App\Models\Term::all();
+
+            // If we have a class_id in the URL, use it to load subjects
+            if (request('class_id')) {
+                $subjects = \App\Models\Subject::whereHas('resources', function($query) {
+                    $query->where('class_id', request('class_id'))
+                        ->whereNotNull('google_drive_link');
+                })->get();
+            }
+            // If we have saved preferences, use them to load subjects
+            elseif ($preference && $preference->class_id) {
+                $subjects = \App\Models\Subject::whereHas('resources', function($query) use ($preference) {
+                    $query->where('class_id', $preference->class_id)
+                        ->whereNotNull('google_drive_link');
+                })->get();
+            }
+            
+            // Build the query based on preferences and subscription
+            $query = \App\Models\Resource::with(['subject', 'term', 'topic', 'classRoom'])
+                ->where('is_active', true)
+                ->whereNotNull('google_drive_link')
+                ->where('google_drive_link', '!=', '');
+            
+            // Apply grade level filter if set in preferences
+            if ($preference && $preference->grade_level) {
+                $query->where('grade_level', $preference->grade_level);
+            }
+            
+            // Apply class filter if set in preferences
+            if ($preference && $preference->class_id) {
+                $query->where('class_id', $preference->class_id);
+            }
+            
+            // Apply subject filter if set in preferences
+            if ($preference && $preference->subject_id) {
+                $query->where('subject_id', $preference->subject_id);
+            }
+            
+            // Apply manual filters if selected
+            if ($request->filled('class_id')) {
+                $query->where('class_id', $request->class_id);
+            }
+            if ($request->filled('subject_id')) {
+                $query->where('subject_id', $request->subject_id);
+            }
+            if ($request->filled('topic_id')) {
+                $query->where('topic_id', $request->topic_id);
+            }
+            if ($request->filled('term_id')) {
+                $query->where('term_id', $request->term_id);
+            }
+            if ($request->filled('grade_level')) {
+                $query->where('grade_level', $request->grade_level);
+            }
+            if ($request->filled('search')) {
+                $query->where(function($q) use ($request) {
+                    $q->where('title', 'like', '%' . $request->search . '%')
+                      ->orWhere('description', 'like', '%' . $request->search . '%');
+                });
+            }
+            
+            $resources = $query->latest()->paginate(12);
+            $resources->appends($request->query());
+            
+            // Get filter options
+            $baseQuery = \App\Models\Resource::where('is_active', true)
+                ->whereNotNull('google_drive_link')
+                ->where('google_drive_link', '!=', '');
+            
+            // Apply grade level filter if set in preferences
+            if ($preference && $preference->grade_level) {
+                $baseQuery->where('grade_level', $preference->grade_level);
+            }
+            
+            // Apply class filter if set in preferences
+            if ($preference && $preference->class_id) {
+                $baseQuery->where('class_id', $preference->class_id);
+            }
+            
+            // Apply subject filter if set in preferences
+            if ($preference && $preference->subject_id) {
+                $baseQuery->where('subject_id', $preference->subject_id);
+            }
+            
+            $subjects = \App\Models\Subject::whereIn('id', 
+                $baseQuery->pluck('subject_id')->unique()->filter()
+            )->get();
+            
+            $topics = \App\Models\Topic::whereIn('id',
+                $baseQuery->pluck('topic_id')->unique()->filter()
+            )->get();
+            
+            $terms = \App\Models\Term::whereIn('id',
+                $baseQuery->pluck('term_id')->unique()->filter()
+            )->get();
+        }
+        return view('student.debug-my-videos', compact('resources', 'classes', 'subjects', 'topics', 'terms', 'isSchoolStudent'));
     }
 
     public function uploadAssessment(Request $request, $id)
@@ -826,5 +1125,29 @@ class UserPreferenceController extends Controller
         $terms = \App\Models\Term::orderBy('name')->get();
 
         return view('student.my-assignments', compact('assignments', 'subjects', 'terms'));
+    }
+
+    /**
+     * Get the grade level (O Level or A Level) for a student
+     */
+    protected function getStudentGradeLevel($user)
+    {
+        // Check from students table
+        $student = \DB::table('students')
+            ->where('user_id', $user->id)
+            ->first(['level', 'class']);
+
+        if (!$student) {
+            return null;
+        }
+
+        // Determine grade level based on level field or class
+        if ($student->level === 'A Level' || in_array($student->class, ['Form 5', 'Form 6'])) {
+            return 'A Level';
+        } elseif ($student->level === 'O Level' || in_array($student->class, ['Form 1', 'Form 2', 'Form 3', 'Form 4'])) {
+            return 'O Level';
+        }
+
+        return null;
     }
 }
