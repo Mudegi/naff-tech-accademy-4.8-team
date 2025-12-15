@@ -94,10 +94,6 @@
                     </div>
                 @endforelse
             </div>
-            <div class="subscription-cta">
-                <p>Get access to all videos with a subscription</p>
-                <a href="{{ route('pricing') }}" class="dashboard-btn dashboard-btn-primary">View Subscription Plans</a>
-            </div>
         </div>
     @endif
 </div>

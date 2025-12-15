@@ -8,6 +8,7 @@ use App\Models\Term;
 use App\Models\Subject;
 use App\Models\Topic;
 use App\Models\Resource;
+use App\Models\User;
 use App\Traits\FiltersByStudentCombination;
 use App\Models\UserSubscription;
 use Illuminate\Http\Request;
@@ -239,26 +240,57 @@ class UserPreferenceController extends Controller
             return view('student.my-videos', compact('resources', 'classes', 'subjects', 'topics', 'terms', 'isSchoolStudent'));
         }
         
-        // Check if user is a school student - they get free access to their school's resources
-        // School students have account_type 'student' and a non-null school_id
-        $isSchoolStudent = $user->account_type === 'student' && !is_null($user->school_id) && $user->school_id > 0;
-        
+        // Determine if we should treat the current session as a school-student view.
+        // School students have account_type 'student' and a non-null school_id.
+        // Additionally, parents linked to a school student should be able to view their child's
+        // school resources. We pick the primary child if available, otherwise the first linked child.
+        $studentUser = $user;
+        $isSchoolStudent = false;
+
+        if ($user->account_type === 'student' && !is_null($user->school_id) && $user->school_id > 0) {
+            $isSchoolStudent = true;
+            $studentUser = $user;
+        } elseif ($user->account_type === 'parent') {
+            $primaryChild = $user->children()->wherePivot('is_primary', 1)->first();
+            if (!$primaryChild) {
+                $primaryChild = $user->children()->first();
+            }
+            if ($primaryChild && !is_null($primaryChild->school_id) && $primaryChild->school_id > 0) {
+                $isSchoolStudent = true;
+                $studentUser = $primaryChild;
+            }
+        }
+
         // Log for debugging (remove in production)
-        if ($user->account_type === 'student') {
+        if ($studentUser->account_type === 'student') {
             \Log::info('My Videos Access Check', [
-                'user_id' => $user->id,
-                'user_name' => $user->name,
-                'account_type' => $user->account_type,
-                'school_id' => $user->school_id,
-                'is_school_student' => $isSchoolStudent
+                'user_id' => $studentUser->id,
+                'user_name' => $studentUser->name,
+                'account_type' => $studentUser->account_type,
+                'school_id' => $studentUser->school_id,
+                'is_school_student' => $isSchoolStudent,
+                'acting_user_id' => $user->id,
             ]);
         }
-        
-        // School students don't need preferences or subscriptions - they get free access
+
+        // If the current user is a parent, log their linked children for debugging
+        if ($user->account_type === 'parent') {
+            $childList = $user->children()->get(['id','name','school_id'])->map(function($c){
+                return ['id' => $c->id, 'name' => $c->name, 'school_id' => $c->school_id];
+            })->toArray();
+            \Log::info('Parent children debug', [
+                'parent_id' => $user->id,
+                'children' => $childList,
+                'is_school_student_context' => $isSchoolStudent,
+            ]);
+        }
+
+        // School students (or parents acting for their linked student) don't need preferences
+        // or subscriptions - they get free access
         if ($isSchoolStudent) {
-            // Determine student's grade level (O Level or A Level)
-            $studentGradeLevel = $this->getStudentGradeLevel($user);
-            
+            // Determine student's grade level (O Level or A Level) using the student context
+            $studentGradeLevel = $this->getStudentGradeLevel($studentUser);
+
             if (!$studentGradeLevel) {
                 // If we can't determine grade level, show no resources
                 $resources = collect();
@@ -276,19 +308,19 @@ class UserPreferenceController extends Controller
                     ->where('grade_level', $studentGradeLevel)
                     ->whereNotNull('google_drive_link')
                     ->where('google_drive_link', '!=', '')
-                    ->where(function($q) use ($user) {
-                        $q->where('school_id', $user->school_id)
-                          ->orWhereRaw('id in (select resource_id from resource_school where school_id = ?)', [$user->school_id]);
+                    ->where(function($q) use ($studentUser) {
+                        $q->where('school_id', $studentUser->school_id)
+                          ->orWhereRaw('id in (select resource_id from resource_school where school_id = ?)', [$studentUser->school_id]);
                     });
-                
+
                 // For A Level students, filter by their subject combination
                 if ($studentGradeLevel === 'A Level') {
-                    $combinationSubjects = $this->getStudentCombinationSubjects($user);
+                    $combinationSubjects = $this->getStudentCombinationSubjects($studentUser);
                     if ($combinationSubjects !== null && count($combinationSubjects) > 0) {
                         $query->whereIn('subject_id', $combinationSubjects);
                     }
                 }
-                
+
                 // Apply manual filters if selected
                 if ($request->filled('subject_id')) {
                     $query->where('subject_id', $request->subject_id);
@@ -305,19 +337,19 @@ class UserPreferenceController extends Controller
                           ->orWhere('description', 'like', '%' . $request->search . '%');
                     });
                 }
-                
+
                 $resources = $query->latest()->paginate(12);
                 $resources->appends($request->query());
-                
+
                 // Get filter options from school's resources of the same grade level
                 $baseQuery = \App\Models\Resource::where('is_active', true)
                     ->where('grade_level', $studentGradeLevel)
                     ->whereNotNull('google_drive_link')
                     ->where('google_drive_link', '!=', '')
-                    ->where(function($q) use ($user) {
-                        $q->where('school_id', $user->school_id)
-                          ->orWhereHas('schools', function($subQuery) use ($user) {
-                              $subQuery->where('schools.id', $user->school_id);
+                    ->where(function($q) use ($studentUser) {
+                        $q->where('school_id', $studentUser->school_id)
+                          ->orWhereHas('schools', function($subQuery) use ($studentUser) {
+                              $subQuery->where('schools.id', $studentUser->school_id);
                           });
                     });
                 
@@ -344,6 +376,68 @@ class UserPreferenceController extends Controller
                 $classes = collect();
             }
         } else {
+            // For non-school students, check if impersonated by parent
+            if (session('impersonator_id')) {
+                // Parent is viewing child's videos - show videos for the child's grade level
+                $studentGradeLevel = $this->getStudentGradeLevel($user);
+                
+                if (!$studentGradeLevel) {
+                    $resources = collect();
+                    $classes = collect();
+                    $subjects = collect();
+                    $topics = collect();
+                    $terms = collect();
+                } else {
+                    $query = \App\Models\Resource::query();
+                    $query->withoutGlobalScope('school');
+                    $query->with(['subject', 'term', 'topic', 'classRoom'])
+                        ->where('is_active', true)
+                        ->where('grade_level', $studentGradeLevel)
+                        ->whereNotNull('google_drive_link')
+                        ->where('google_drive_link', '!=', '');
+
+                    // For A Level students, filter by their subject combination
+                    if ($studentGradeLevel === 'A Level') {
+                        $combinationSubjects = $this->getStudentCombinationSubjects($user);
+                        if ($combinationSubjects !== null && count($combinationSubjects) > 0) {
+                            $query->whereIn('subject_id', $combinationSubjects);
+                        }
+                    }
+
+                    $resources = $query->latest()->paginate(12);
+                    $resources->appends($request->query());
+
+                    // Get filter options
+                    $baseQuery = \App\Models\Resource::where('is_active', true)
+                        ->where('grade_level', $studentGradeLevel)
+                        ->whereNotNull('google_drive_link')
+                        ->where('google_drive_link', '!=', '');
+
+                    if ($studentGradeLevel === 'A Level') {
+                        $combinationSubjects = $this->getStudentCombinationSubjects($user);
+                        if ($combinationSubjects !== null && count($combinationSubjects) > 0) {
+                            $baseQuery->whereIn('subject_id', $combinationSubjects);
+                        }
+                    }
+
+                    $subjects = \App\Models\Subject::whereIn('id', 
+                        $baseQuery->pluck('subject_id')->unique()->filter()
+                    )->get();
+
+                    $topics = \App\Models\Topic::whereIn('id',
+                        $baseQuery->pluck('topic_id')->unique()->filter()
+                    )->get();
+
+                    $terms = \App\Models\Term::whereIn('id',
+                        $baseQuery->pluck('term_id')->unique()->filter()
+                    )->get();
+
+                    $classes = collect();
+                }
+                $isSchoolStudent = true; // Treat as school student for parent viewing
+                return view('student.my-videos', compact('resources', 'classes', 'subjects', 'topics', 'terms', 'isSchoolStudent'));
+            }
+            
             // For non-school students, check preferences and subscription
             $preference = $user->preference;
             
@@ -564,14 +658,32 @@ class UserPreferenceController extends Controller
             return view('student.debug-my-videos', compact('resources', 'classes', 'subjects', 'topics', 'terms', 'isSchoolStudent'));
         }
         
-        // Check if user is a school student - they get free access to their school's resources
-        // School students have account_type 'student' and a non-null school_id
-        $isSchoolStudent = $user->account_type === 'student' && !is_null($user->school_id) && $user->school_id > 0;
-        
-        // School students don't need preferences or subscriptions - they get free access
+        // Determine if we should treat the current session as a school-student view.
+        // School students have account_type 'student' and a non-null school_id.
+        // Additionally, parents linked to a school student should be able to view their child's
+        // school resources. We pick the primary child if available, otherwise the first linked child.
+        $studentUser = $user;
+        $isSchoolStudent = false;
+
+        if ($user->account_type === 'student' && !is_null($user->school_id) && $user->school_id > 0) {
+            $isSchoolStudent = true;
+            $studentUser = $user;
+        } elseif ($user->account_type === 'parent') {
+            $primaryChild = $user->children()->wherePivot('is_primary', 1)->first();
+            if (!$primaryChild) {
+                $primaryChild = $user->children()->first();
+            }
+            if ($primaryChild && !is_null($primaryChild->school_id) && $primaryChild->school_id > 0) {
+                $isSchoolStudent = true;
+                $studentUser = $primaryChild;
+            }
+        }
+
+        // School students (or parents acting for their linked student) don't need preferences
+        // or subscriptions - they get free access
         if ($isSchoolStudent) {
-            // Determine student's grade level (O Level or A Level)
-            $studentGradeLevel = $this->getStudentGradeLevel($user);
+            // Determine student's grade level (O Level or A Level) using the student context
+            $studentGradeLevel = $this->getStudentGradeLevel($studentUser);
             
             if (!$studentGradeLevel) {
                 // If we can't determine grade level, show no resources
@@ -588,16 +700,16 @@ class UserPreferenceController extends Controller
                     ->where('grade_level', $studentGradeLevel)
                     ->whereNotNull('google_drive_link')
                     ->where('google_drive_link', '!=', '')
-                    ->where(function($q) use ($user) {
-                        $q->where('school_id', $user->school_id)
-                          ->orWhereHas('schools', function($subQuery) use ($user) {
-                              $subQuery->where('schools.id', $user->school_id);
+                    ->where(function($q) use ($studentUser) {
+                        $q->where('school_id', $studentUser->school_id)
+                          ->orWhereHas('schools', function($subQuery) use ($studentUser) {
+                              $subQuery->where('schools.id', $studentUser->school_id);
                           });
                     });
                 
                 // For A Level students, filter by their subject combination
                 if ($studentGradeLevel === 'A Level') {
-                    $combinationSubjects = $this->getStudentCombinationSubjects($user);
+                    $combinationSubjects = $this->getStudentCombinationSubjects($studentUser);
                     if ($combinationSubjects !== null && count($combinationSubjects) > 0) {
                         $query->whereIn('subject_id', $combinationSubjects);
                     }
@@ -628,10 +740,10 @@ class UserPreferenceController extends Controller
                     ->where('grade_level', $studentGradeLevel)
                     ->whereNotNull('google_drive_link')
                     ->where('google_drive_link', '!=', '')
-                    ->where(function($q) use ($user) {
-                        $q->where('school_id', $user->school_id)
-                          ->orWhereHas('schools', function($subQuery) use ($user) {
-                              $subQuery->where('schools.id', $user->school_id);
+                    ->where(function($q) use ($studentUser) {
+                        $q->where('school_id', $studentUser->school_id)
+                          ->orWhereHas('schools', function($subQuery) use ($studentUser) {
+                              $subQuery->where('schools.id', $studentUser->school_id);
                           });
                     });
                 

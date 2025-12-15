@@ -557,6 +557,7 @@ Route::middleware(['auth', 'single.session', \App\Http\Middleware\CheckAccountTy
 Route::middleware(['auth', 'single.session', \App\Http\Middleware\CheckAccountType::class])->prefix('parent')->name('parent.')->group(function () {
     Route::get('/dashboard', [App\Http\Controllers\Parent\DashboardController::class, 'index'])->name('dashboard');
     Route::get('/children/{studentId}', [App\Http\Controllers\Parent\DashboardController::class, 'showChild'])->name('children.show');
+    Route::get('/children/{studentId}/videos', [App\Http\Controllers\Parent\DashboardController::class, 'showChildVideos'])->name('children.videos');
 });
 
 Route::post('/payment/easypay', [App\Http\Controllers\Frontend\PricingController::class, 'payWithEasypay'])->name('payment.easypay');
@@ -609,6 +610,7 @@ Route::middleware(['auth', 'single.session', \App\Http\Middleware\CheckAccountTy
 Route::middleware(['auth', 'single.session'])->prefix('parent')->name('parent.')->group(function () {
     Route::get('/dashboard', [\App\Http\Controllers\Parent\DashboardController::class, 'index'])->name('dashboard');
     Route::get('/child/{studentId}', [\App\Http\Controllers\Parent\DashboardController::class, 'showChild'])->name('child.details');
+    Route::get('/my-videos', [\App\Http\Controllers\Parent\DashboardController::class, 'myVideos'])->name('my-videos');
     
     // Parent-Teacher Messaging
     Route::get('/messages', [\App\Http\Controllers\Parent\MessageController::class, 'index'])->name('messages.index');
@@ -623,4 +625,9 @@ Route::middleware(['auth', 'single.session'])->prefix('parent')->name('parent.')
     Route::get('/profile', [\App\Http\Controllers\Parent\MessageController::class, 'showProfile'])->name('profile');
     Route::post('/profile', [\App\Http\Controllers\Parent\MessageController::class, 'updateProfile'])->name('profile.update');
 });
+
+// Stop impersonation (used by parents/admins after impersonating a user)
+Route::post('/stop-impersonating', [\App\Http\Controllers\ImpersonationController::class, 'stop'])
+    ->middleware(['auth', 'single.session'])
+    ->name('stop-impersonating');
 

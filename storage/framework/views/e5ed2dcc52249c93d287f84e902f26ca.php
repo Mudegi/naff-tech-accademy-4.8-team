@@ -85,8 +85,8 @@
                 </a>
                 <?php endif; ?>
 
-                <?php if($hasActiveSubscription || in_array(session('user_type'), ['teacher', 'subject_teacher']) || (Auth::user()->account_type === 'student' && Auth::user()->school_id)): ?>
-                    <a href="<?php echo e(route('student.my-videos')); ?>" class="sidebar-item <?php echo e(request()->routeIs('student.my-videos') ? 'active' : ''); ?>">
+                <?php if($hasActiveSubscription || in_array(session('user_type'), ['teacher', 'subject_teacher']) || (Auth::user()->account_type === 'student' && Auth::user()->school_id) || Auth::user()->account_type === 'parent'): ?>
+                    <a href="<?php echo e(Auth::user()->account_type === 'parent' ? route('parent.my-videos') : route('student.my-videos')); ?>" class="sidebar-item <?php echo e((Auth::user()->account_type === 'parent' ? request()->routeIs('parent.my-videos') : request()->routeIs('student.my-videos')) ? 'active' : ''); ?>">
                         <i class="fas fa-play-circle"></i>
                         <span>My Videos</span>
                     </a>
@@ -119,13 +119,20 @@
                             <span>My Videos</span>
                         </a>
                     <?php else: ?>
-                        <a href="<?php echo e(route('pricing')); ?>" class="sidebar-item">
-                            <i class="fas fa-play-circle"></i>
-                            <span>My Videos</span>
-                        </a>
+                        <?php if(session('impersonator_id')): ?>
+                            <a href="<?php echo e(route('student.my-videos')); ?>" class="sidebar-item <?php echo e(request()->routeIs('student.my-videos') ? 'active' : ''); ?>">
+                                <i class="fas fa-play-circle"></i>
+                                <span>My Videos</span>
+                            </a>
+                        <?php else: ?>
+                            <a href="<?php echo e(route('pricing')); ?>" class="sidebar-item">
+                                <i class="fas fa-play-circle"></i>
+                                <span>My Videos</span>
+                            </a>
+                        <?php endif; ?>
                     <?php endif; ?>
 
-                    <?php if(!Auth::user()->school_id): ?>
+                    <?php if(!Auth::user()->school_id && Auth::user()->account_type !== 'parent'): ?>
                     <a href="<?php echo e(route('pricing')); ?>" class="sidebar-item">
                         <i class="fas fa-cog"></i>
                         <span>Learning Preferences</span>

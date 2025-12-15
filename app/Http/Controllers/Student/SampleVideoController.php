@@ -129,11 +129,50 @@ class SampleVideoController extends Controller
         
         $classes = $classesQuery->get();
 
-        // Check if the user has an active subscription
-        $hasActiveSubscription = \App\Models\UserSubscription::where('user_id', \Illuminate\Support\Facades\Auth::id())
+        // Check if the user has an active subscription.
+        // For parents, also consider linked children and their school subscriptions so parents
+        // linked to a school student can access videos.
+        $currentUserId = \Illuminate\Support\Facades\Auth::id();
+        $hasActiveSubscription = \App\Models\UserSubscription::where('user_id', $currentUserId)
             ->where('end_date', '>', now())
             ->where('is_active', true)
             ->exists();
+
+        // If not active for this user, and the user is a parent, check linked children and their schools
+        if (!$hasActiveSubscription && $user->account_type === 'parent') {
+            $childIds = $user->children()->pluck('users.id')->filter()->toArray();
+
+            if (!empty($childIds)) {
+                // Check if any child has an active personal subscription
+                $childHasSubscription = \App\Models\UserSubscription::whereIn('user_id', $childIds)
+                    ->where('end_date', '>', now())
+                    ->where('is_active', true)
+                    ->exists();
+
+                if ($childHasSubscription) {
+                    $hasActiveSubscription = true;
+                } else {
+                    // Otherwise, check if any of the children's schools have an active school subscription
+                    $schoolIds = \App\Models\User::whereIn('id', $childIds)
+                        ->pluck('school_id')
+                        ->filter()
+                        ->unique()
+                        ->toArray();
+
+                    if (!empty($schoolIds)) {
+                        $schoolHasActive = \App\Models\SchoolSubscription::whereIn('school_id', $schoolIds)
+                            ->where('is_active', true)
+                            ->where('payment_status', 'completed')
+                            ->where('end_date', '>=', now())
+                            ->exists();
+
+                        if ($schoolHasActive) {
+                            $hasActiveSubscription = true;
+                        }
+                    }
+                }
+            }
+        }
 
         return view('student.sample-videos.index', compact('resources', 'subjects', 'topics', 'terms', 'classes', 'hasActiveSubscription'));
     }

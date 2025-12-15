@@ -1,8 +1,8 @@
-@extends('frontend.layouts.app')
 
-@section('title', 'Parent Dashboard')
 
-@section('styles')
+<?php $__env->startSection('title', 'Parent Dashboard'); ?>
+
+<?php $__env->startSection('styles'); ?>
 <style>
     body { background: #f5f7fa; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
     .parent-container { max-width: 1400px; margin: 0 auto; padding: 2rem 1rem; }
@@ -78,22 +78,22 @@
     .no-activity i { font-size: 2.5rem; color: #cbd5e0; margin-bottom: 0.5rem; }
     .no-activity p { margin: 0; color: #718096; font-size: 0.875rem; }
 </style>
-@endsection
+<?php $__env->stopSection(); ?>
 
-@section('content')
+<?php $__env->startSection('content'); ?>
 <div class="parent-container">
     <div class="page-header">
         <div>
             <h1 class="page-title">👋 Parent Dashboard</h1>
             <p class="page-subtitle">Monitor your children's academic progress and performance</p>
         </div>
-        <a href="{{ route('parent.messages.index') }}" class="compose-btn">
+        <a href="<?php echo e(route('parent.messages.index')); ?>" class="compose-btn">
             <i class="fas fa-envelope"></i> Messages
             <span class="badge bg-danger" id="parent-unread-badge" style="display: none; margin-left: 0.5rem;">0</span>
         </a>
     </div>
 
-    @if($children->isEmpty())
+    <?php if($children->isEmpty()): ?>
         <div class="empty-state">
             <div class="empty-icon"><i class="fas fa-user-friends"></i></div>
             <h3>No Children Linked</h3>
@@ -102,45 +102,45 @@
                 <i class="fas fa-info-circle"></i> The school will verify your relationship before linking accounts
             </div>
         </div>
-    @else
+    <?php else: ?>
         <!-- Statistics Overview -->
-        @if($overallSummary)
+        <?php if($overallSummary): ?>
         <div class="stats-grid">
             <div class="stat-box">
                 <div class="stat-icon" style="background: linear-gradient(135deg, #6366f1, #8b5cf6);">
                     <i class="fas fa-users"></i>
                 </div>
-                <p class="stat-number">{{ $overallSummary['total_children'] }}</p>
+                <p class="stat-number"><?php echo e($overallSummary['total_children']); ?></p>
                 <p class="stat-label">Total Children</p>
             </div>
             <div class="stat-box">
                 <div class="stat-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
                     <i class="fas fa-star"></i>
                 </div>
-                <p class="stat-number">{{ $overallSummary['performing_well'] }}</p>
+                <p class="stat-number"><?php echo e($overallSummary['performing_well']); ?></p>
                 <p class="stat-label">Performing Well (≥70%)</p>
             </div>
             <div class="stat-box">
                 <div class="stat-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
                     <i class="fas fa-exclamation-triangle"></i>
                 </div>
-                <p class="stat-number">{{ $overallSummary['needs_attention'] }}</p>
+                <p class="stat-number"><?php echo e($overallSummary['needs_attention']); ?></p>
                 <p class="stat-label">Needs Attention (<50%)</p>
             </div>
             <div class="stat-box">
                 <div class="stat-icon" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">
                     <i class="fas fa-clipboard-list"></i>
                 </div>
-                <p class="stat-number">{{ $overallSummary['total_activities'] }}</p>
+                <p class="stat-number"><?php echo e($overallSummary['total_activities']); ?></p>
                 <p class="stat-label">Total Activities</p>
             </div>
         </div>
-        @endif
+        <?php endif; ?>
 
         <!-- Children Cards -->
         <div class="children-grid">
-            @foreach($childrenData as $data)
-            @php
+            <?php $__currentLoopData = $childrenData; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $data): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+            <?php
                 $student = $data['student'];
                 $performance = $data['performance'];
                 $recentActivity = $data['recent_activity'];
@@ -148,88 +148,86 @@
                 
                 $circleColor = $performance['overall_average'] >= 70 ? '#10b981' : ($performance['overall_average'] >= 50 ? '#f59e0b' : '#ef4444');
                 $badgeClass = $performance['overall_average'] >= 70 ? 'background: #d1fae5; color: #065f46;' : ($performance['overall_average'] >= 50 ? 'background: #fef3c7; color: #92400e;' : 'background: #fee2e2; color: #991b1b;');
-            @endphp
+            ?>
             
             <div class="student-card">
                 <div class="card-top">
                     <div class="student-left">
-                        <div class="avatar">{{ strtoupper(substr($student->name, 0, 1)) }}</div>
+                        <div class="avatar"><?php echo e(strtoupper(substr($student->name, 0, 1))); ?></div>
                         <div class="student-details">
-                            <h4>{{ $student->name }}</h4>
+                            <h4><?php echo e($student->name); ?></h4>
                             <p>
                                 <i class="fas fa-graduation-cap"></i> 
-                                {{ optional($student->classes->first())->name ?? 'Class not assigned' }}
-                                @if($student->student) · {{ $student->student->level ?? 'N/A' }}@endif
+                                <?php echo e(optional($student->classes->first())->name ?? 'Class not assigned'); ?>
+
+                                <?php if($student->student): ?> · <?php echo e($student->student->level ?? 'N/A'); ?><?php endif; ?>
                             </p>
                         </div>
                     </div>
-                    <a href="{{ route('parent.children.show', $student->id) }}" class="view-btn">View Details</a>
+                    <a href="<?php echo e(route('parent.children.show', $student->id)); ?>" class="view-btn">View Details</a>
                 </div>
 
                 <div class="card-middle">
                     <div class="performance">
-                        <div class="score-display" style="background: {{ $circleColor }};">
-                            <div class="score-percent">{{ $performance['overall_average'] }}%</div>
+                        <div class="score-display" style="background: <?php echo e($circleColor); ?>;">
+                            <div class="score-percent"><?php echo e($performance['overall_average']); ?>%</div>
                         </div>
-                        <span class="score-badge" style="{{ $badgeClass }}">{{ $performance['letter_grade'] }}</span>
+                        <span class="score-badge" style="<?php echo e($badgeClass); ?>"><?php echo e($performance['letter_grade']); ?></span>
                     </div>
 
                     <div class="metrics-row">
                         <div class="metric-item">
-                            <div class="metric-num">{{ $performance['total_assignments'] }}</div>
+                            <div class="metric-num"><?php echo e($performance['total_assignments']); ?></div>
                             <div class="metric-text">Assignments</div>
                         </div>
                         <div class="metric-item">
-                            <div class="metric-num">{{ $performance['total_exams'] }}</div>
+                            <div class="metric-num"><?php echo e($performance['total_exams']); ?></div>
                             <div class="metric-text">Exams</div>
                         </div>
                     </div>
 
-                    @if($performance['pending_assignments'] > 0)
+                    <?php if($performance['pending_assignments'] > 0): ?>
                     <div class="alert-warn">
-                        <i class="fas fa-clock"></i> <strong>{{ $performance['pending_assignments'] }}</strong> assignment(s) awaiting grading
+                        <i class="fas fa-clock"></i> <strong><?php echo e($performance['pending_assignments']); ?></strong> assignment(s) awaiting grading
                     </div>
-                    @endif
+                    <?php endif; ?>
 
-                    @if(!empty($recentActivity))
+                    <?php if(!empty($recentActivity)): ?>
                     <div class="recent-title"><i class="fas fa-history"></i> Recent Activity</div>
                     <div class="activities">
-                        @foreach(array_slice($recentActivity, 0, 3) as $activity)
+                        <?php $__currentLoopData = array_slice($recentActivity, 0, 3); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $activity): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                         <div class="act-item">
                             <div class="act-left">
-                                <h5>{{ $activity['title'] }}</h5>
-                                <p>{{ $activity['date']->diffForHumans() }}</p>
+                                <h5><?php echo e($activity['title']); ?></h5>
+                                <p><?php echo e($activity['date']->diffForHumans()); ?></p>
                             </div>
                             <div class="act-right">
-                                <div class="act-score">{{ $activity['percentage'] }}%</div>
-                                <div class="act-grade">{{ $activity['grade'] }}</div>
+                                <div class="act-score"><?php echo e($activity['percentage']); ?>%</div>
+                                <div class="act-grade"><?php echo e($activity['grade']); ?></div>
                             </div>
                         </div>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </div>
-                    @else
+                    <?php else: ?>
                     <div class="no-activity">
                         <i class="fas fa-inbox"></i>
                         <p>No recent activity</p>
                     </div>
-                    @endif
+                    <?php endif; ?>
                 </div>
 
                 <div class="card-bottom">
-                    <a href="{{ route('parent.child.details', $student->id) }}" class="action-btn">
+                    <a href="<?php echo e(route('parent.child.details', $student->id)); ?>" class="action-btn">
                         <i class="fas fa-chart-bar"></i> Full Report
                     </a>
-                    <a href="{{ route('parent.children.videos', $student->id) }}" class="action-btn">
-                        <i class="fas fa-play-circle"></i> View Videos
-                    </a>
-                    <a href="{{ route('parent.messages.create', ['student_id' => $student->id]) }}" class="action-btn">
+                    <a href="<?php echo e(route('parent.messages.create', ['student_id' => $student->id])); ?>" class="action-btn">
                         <i class="fas fa-comments"></i> Message Teacher
                     </a>
                 </div>
             </div>
-            @endforeach
+            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
         </div>
-    @endif
+    <?php endif; ?>
 </div>
 
 <script>
@@ -249,4 +247,6 @@ document.addEventListener('DOMContentLoaded', function() {
         .catch(error => console.error('Error loading message count:', error));
 });
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('frontend.layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Users\user\Desktop\naff-tech-accademy-4.8-team\resources\views/parent/parent-dashboard.blade.php ENDPATH**/ ?>

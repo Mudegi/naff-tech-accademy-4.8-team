@@ -113,8 +113,8 @@
                 </a>
                 @endif
 
-                @if($hasActiveSubscription || in_array(session('user_type'), ['teacher', 'subject_teacher']) || (Auth::user()->account_type === 'student' && Auth::user()->school_id))
-                    <a href="{{ route('student.my-videos') }}" class="sidebar-item {{ request()->routeIs('student.my-videos') ? 'active' : '' }}">
+                @if($hasActiveSubscription || in_array(session('user_type'), ['teacher', 'subject_teacher']) || (Auth::user()->account_type === 'student' && Auth::user()->school_id) || Auth::user()->account_type === 'parent')
+                    <a href="{{ Auth::user()->account_type === 'parent' ? route('parent.my-videos') : route('student.my-videos') }}" class="sidebar-item {{ (Auth::user()->account_type === 'parent' ? request()->routeIs('parent.my-videos') : request()->routeIs('student.my-videos')) ? 'active' : '' }}">
                         <i class="fas fa-play-circle"></i>
                         <span>My Videos</span>
                     </a>
@@ -147,13 +147,20 @@
                             <span>My Videos</span>
                         </a>
                     @else
-                        <a href="{{ route('pricing') }}" class="sidebar-item">
-                            <i class="fas fa-play-circle"></i>
-                            <span>My Videos</span>
-                        </a>
+                        @if(session('impersonator_id'))
+                            <a href="{{ route('student.my-videos') }}" class="sidebar-item {{ request()->routeIs('student.my-videos') ? 'active' : '' }}">
+                                <i class="fas fa-play-circle"></i>
+                                <span>My Videos</span>
+                            </a>
+                        @else
+                            <a href="{{ route('pricing') }}" class="sidebar-item">
+                                <i class="fas fa-play-circle"></i>
+                                <span>My Videos</span>
+                            </a>
+                        @endif
                     @endif
 
-                    @if(!Auth::user()->school_id)
+                    @if(!Auth::user()->school_id && Auth::user()->account_type !== 'parent')
                     <a href="{{ route('pricing') }}" class="sidebar-item">
                         <i class="fas fa-cog"></i>
                         <span>Learning Preferences</span>

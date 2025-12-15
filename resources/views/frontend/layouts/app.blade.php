@@ -54,9 +54,11 @@
                         <a href="{{ route('about') }}" class="inline-flex items-center px-1 pt-1 text-gray-500 hover:text-gray-900 hover:border-b-2 hover:border-indigo-500 font-medium">
                             About Us
                         </a>
+                        @if(!auth()->check() || auth()->user()->account_type !== 'parent')
                         <a href="{{ route('pricing') }}" class="inline-flex items-center px-1 pt-1 text-gray-500 hover:text-gray-900 hover:border-b-2 hover:border-indigo-500 font-medium">
                             Pricing
                         </a>
+                        @endif
                         <a href="{{ route('contact') }}" class="inline-flex items-center px-1 pt-1 text-gray-500 hover:text-gray-900 hover:border-b-2 hover:border-indigo-500 font-medium">
                             Contact
                         </a>
@@ -83,6 +85,9 @@
                                     @if(auth()->user()->account_type === 'parent')
                                         <a href="{{ route('parent.dashboard') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50">
                                             <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
+                                        </a>
+                                        <a href="{{ route('parent.my-videos') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50">
+                                            <i class="fas fa-play-circle mr-2"></i>My Videos
                                         </a>
                                         <a href="{{ route('parent.messages.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50">
                                             <i class="fas fa-envelope mr-2"></i>Messages
@@ -150,9 +155,11 @@
                 <a href="{{ route('about') }}" class="block px-3 py-3 rounded-md text-base font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900">
                     <i class="fas fa-info-circle mr-2"></i> About Us
                 </a>
+                @if(!auth()->check() || auth()->user()->account_type !== 'parent')
                 <a href="{{ route('pricing') }}" class="block px-3 py-3 rounded-md text-base font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900">
                     <i class="fas fa-tags mr-2"></i> Pricing
                 </a>
+                @endif
                 <a href="{{ route('contact') }}" class="block px-3 py-3 rounded-md text-base font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900">
                     <i class="fas fa-envelope mr-2"></i> Contact
                 </a>
@@ -217,7 +224,9 @@
                         <li><a href="{{ route('home') }}" class="text-gray-300 hover:text-white transition duration-150">Home</a></li>
                         <li><a href="{{ route('subjects') }}" class="text-gray-300 hover:text-white transition duration-150">Subjects</a></li>
                         <li><a href="{{ route('about') }}" class="text-gray-300 hover:text-white transition duration-150">About Us</a></li>
+                        @if(!auth()->check() || auth()->user()->account_type !== 'parent')
                         <li><a href="{{ route('pricing') }}" class="text-gray-300 hover:text-white transition duration-150">Pricing</a></li>
+                        @endif
                         <li><a href="{{ route('contact') }}" class="text-gray-300 hover:text-white transition duration-150">Contact</a></li>
                     </ul>
                 </div>

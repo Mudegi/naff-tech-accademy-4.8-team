@@ -7,11 +7,14 @@ use App\Models\User;
 use App\Models\AssignmentSubmission;
 use App\Models\StudentMark;
 use App\Models\GroupSubmission;
+use App\Traits\FiltersByStudentCombination;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
+    use FiltersByStudentCombination;
     public function index()
     {
         $parent = Auth::user();
@@ -61,8 +64,22 @@ class DashboardController extends Controller
         if (!$child) {
             abort(403, 'Unauthorized access to student data.');
         }
-        
-        // Get comprehensive performance data
+        // Impersonate the student so the parent can view the student account UI
+        // Store the parent's id so we can revert impersonation later
+        session()->put('impersonator_id', $parent->id);
+        session()->regenerate();
+
+        // Log in as the student
+        $student = User::find($studentId);
+        if ($student) {
+            Auth::login($student);
+            session()->put('user_type', $student->account_type);
+
+            return redirect()->route('student.my-videos')
+                ->with('success', 'You are now viewing the student account for ' . $student->name);
+        }
+
+        // Fallback: if student record missing for some reason, show parent view
         $assignmentPerformance = $this->getAssignmentPerformance($studentId);
         $examPerformance = $this->getExamPerformance($studentId);
         $groupWorkPerformance = $this->getGroupWorkPerformance($studentId);
@@ -70,7 +87,7 @@ class DashboardController extends Controller
         $recentActivity = $this->getRecentActivity($studentId, 20);
         $performanceTrends = $this->getPerformanceTrends($studentId);
         $overallMetrics = $this->calculateOverallMetrics($assignmentPerformance, $examPerformance, $groupWorkPerformance);
-        
+
         return view('parent.child-performance', compact(
             'child',
             'assignmentPerformance',
@@ -81,6 +98,249 @@ class DashboardController extends Controller
             'performanceTrends',
             'overallMetrics'
         ));
+    }
+
+    /**
+     * Show videos for a specific child.
+     */
+    public function showChildVideos($studentId)
+    {
+        $parent = Auth::user();
+        
+        // Verify this child belongs to this parent
+        $child = $parent->children()->where('student_id', $studentId)->first();
+        
+        if (!$child) {
+            abort(403, 'Unauthorized access to student data.');
+        }
+
+        // Get the student
+        $student = User::find($studentId);
+        if (!$student) {
+            abort(404, 'Student not found.');
+        }
+
+        // Get the student record from students table
+        $studentRecord = \DB::table('students')->where('user_id', $studentId)->first();
+
+        // Determine if the student is a school student
+        $isSchoolStudent = false;
+        if ($studentRecord && !is_null($studentRecord->school_id) && $studentRecord->school_id > 0) {
+            $isSchoolStudent = true;
+        }
+
+        if (!$isSchoolStudent) {
+            // If not a school student, check if parent has any school children
+            $hasSchoolChild = $parent->children()->whereHas('student', function($query) {
+                $query->whereNotNull('school_id')->where('school_id', '>', 0);
+            })->exists();
+            if ($hasSchoolChild) {
+                $isSchoolStudent = true;
+            } else {
+                // If parent has this child linked, treat as school student for access
+                $isSchoolStudent = true;
+            }
+        }
+
+        if ($isSchoolStudent) {
+            $studentGradeLevel = $this->getStudentGradeLevel($student);
+
+            if (!$studentGradeLevel) {
+                $resources = collect();
+                $classes = collect();
+                $subjects = collect();
+                $topics = collect();
+                $terms = collect();
+            } else {
+                $query = \App\Models\Resource::query();
+                $query->withoutGlobalScope('school');
+                $query->with(['subject', 'term', 'topic', 'classRoom'])
+                    ->where('is_active', true)
+                    ->where('grade_level', $studentGradeLevel)
+                    ->whereNotNull('google_drive_link')
+                    ->where('google_drive_link', '!=', '');
+
+                if ($studentRecord && $studentRecord->school_id) {
+                    $query->where(function($q) use ($studentRecord) {
+                        $q->where('school_id', $studentRecord->school_id)
+                          ->orWhereRaw('id in (select resource_id from resource_school where school_id = ?)', [$studentRecord->school_id]);
+                    });
+                }
+
+                // For A Level students, filter by their subject combination
+                if ($studentGradeLevel === 'A Level') {
+                    $combinationSubjects = $this->getStudentCombinationSubjects($student);
+                    if ($combinationSubjects !== null && count($combinationSubjects) > 0) {
+                        $query->whereIn('subject_id', $combinationSubjects);
+                    }
+                }
+
+                $resources = $query->latest()->paginate(12);
+                $resources->appends(request()->query());
+
+                // Get filter options
+                $baseQuery = \App\Models\Resource::where('is_active', true)
+                    ->where('grade_level', $studentGradeLevel)
+                    ->whereNotNull('google_drive_link')
+                    ->where('google_drive_link', '!=', '');
+
+                if ($studentRecord && $studentRecord->school_id) {
+                    $baseQuery->where(function($q) use ($studentRecord) {
+                        $q->where('school_id', $studentRecord->school_id)
+                          ->orWhereHas('schools', function($subQuery) use ($studentRecord) {
+                              $subQuery->where('schools.id', $studentRecord->school_id);
+                          });
+                    });
+                }
+
+                if ($studentGradeLevel === 'A Level') {
+                    $combinationSubjects = $this->getStudentCombinationSubjects($student);
+                    if ($combinationSubjects !== null && count($combinationSubjects) > 0) {
+                        $baseQuery->whereIn('subject_id', $combinationSubjects);
+                    }
+                }
+
+                $subjects = \App\Models\Subject::whereIn('id', 
+                    $baseQuery->pluck('subject_id')->unique()->filter()
+                )->get();
+
+                $topics = \App\Models\Topic::whereIn('id',
+                    $baseQuery->pluck('topic_id')->unique()->filter()
+                )->get();
+
+                $terms = \App\Models\Term::whereIn('id',
+                    $baseQuery->pluck('term_id')->unique()->filter()
+                )->get();
+
+                $classes = collect();
+            }
+
+            return view('student.my-videos', compact('resources', 'classes', 'subjects', 'topics', 'terms', 'isSchoolStudent'));
+        } else {
+            // For parents viewing children's videos, allow access even if not school student
+            $resources = collect();
+            $classes = collect();
+            $subjects = collect();
+            $topics = collect();
+            $terms = collect();
+        }
+
+        return view('student.my-videos', compact('resources', 'classes', 'subjects', 'topics', 'terms', 'isSchoolStudent'));
+
+    }
+
+    /**
+     * Show videos for all children.
+     */
+    public function myVideos(Request $request)
+    {
+        $parent = Auth::user();
+
+        // Get all children
+        $children = $parent->children()->get();
+
+        if ($children->isEmpty()) {
+            return redirect()->route('parent.dashboard')->with('error', 'No children linked to view videos.');
+        }
+
+        // Collect all school_ids and grade levels from children
+        $schoolIds = [];
+        $gradeLevels = [];
+
+        foreach ($children as $child) {
+            $studentRecord = \DB::table('students')->where('user_id', $child->id)->first();
+            if ($studentRecord && $studentRecord->school_id) {
+                $schoolIds[] = $studentRecord->school_id;
+            }
+            $gradeLevel = $this->getStudentGradeLevel($child);
+            if ($gradeLevel) {
+                $gradeLevels[] = $gradeLevel;
+            }
+        }
+
+        $schoolIds = array_unique($schoolIds);
+        $gradeLevels = array_unique($gradeLevels);
+
+        if (empty($schoolIds) && empty($gradeLevels) && auth()->user()->account_type !== 'parent') {
+            // No school access, redirect to pricing
+            return redirect()->route('pricing')->with('error', 'Please subscribe to access this feature.');
+        }
+
+        // Build query for resources
+        $query = \App\Models\Resource::query();
+        $query->withoutGlobalScope('school');
+        $query->with(['subject', 'term', 'topic', 'classRoom'])
+            ->where('is_active', true)
+            ->whereNotNull('google_drive_link')
+            ->where('google_drive_link', '!=', '');
+
+        if (!empty($schoolIds)) {
+            $query->where(function($q) use ($schoolIds) {
+                $q->whereIn('school_id', $schoolIds)
+                  ->orWhereHas('schools', function($subQuery) use ($schoolIds) {
+                      $subQuery->whereIn('schools.id', $schoolIds);
+                  });
+            });
+        }
+
+        if (!empty($gradeLevels)) {
+            $query->whereIn('grade_level', $gradeLevels);
+        }
+
+        // Apply filters
+        if ($request->filled('subject_id')) {
+            $query->where('subject_id', $request->subject_id);
+        }
+        if ($request->filled('topic_id')) {
+            $query->where('topic_id', $request->topic_id);
+        }
+        if ($request->filled('term_id')) {
+            $query->where('term_id', $request->term_id);
+        }
+        if ($request->filled('search')) {
+            $query->where(function($q) use ($request) {
+                $q->where('title', 'like', '%' . $request->search . '%')
+                  ->orWhere('description', 'like', '%' . $request->search . '%');
+            });
+        }
+
+        $resources = $query->latest()->paginate(12);
+        $resources->appends($request->query());
+
+        // Get filter options
+        $baseQuery = \App\Models\Resource::where('is_active', true)
+            ->whereNotNull('google_drive_link')
+            ->where('google_drive_link', '!=', '');
+
+        if (!empty($schoolIds)) {
+            $baseQuery->where(function($q) use ($schoolIds) {
+                $q->whereIn('school_id', $schoolIds)
+                  ->orWhereHas('schools', function($subQuery) use ($schoolIds) {
+                      $subQuery->whereIn('schools.id', $schoolIds);
+                  });
+            });
+        }
+
+        if (!empty($gradeLevels)) {
+            $baseQuery->whereIn('grade_level', $gradeLevels);
+        }
+
+        $subjects = \App\Models\Subject::whereIn('id', 
+            $baseQuery->pluck('subject_id')->unique()->filter()
+        )->get();
+
+        $topics = \App\Models\Topic::whereIn('id',
+            $baseQuery->pluck('topic_id')->unique()->filter()
+        )->get();
+
+        $terms = \App\Models\Term::whereIn('id',
+            $baseQuery->pluck('term_id')->unique()->filter()
+        )->get();
+
+        $classes = collect();
+        $isSchoolStudent = true; // Parents viewing children's videos
+
+        return view('student.my-videos', compact('resources', 'classes', 'subjects', 'topics', 'terms', 'isSchoolStudent'));
     }
 
     /**
@@ -438,5 +698,26 @@ class DashboardController extends Controller
             return $gradeMap[$mark->grade] ?? 0;
         }
         return 0;
+    }
+
+    protected function getStudentGradeLevel($user)
+    {
+        // Check from students table
+        $student = \DB::table('students')
+            ->where('user_id', $user->id)
+            ->first(['level', 'class']);
+
+        if (!$student) {
+            return null;
+        }
+
+        // Determine grade level based on level field or class
+        if ($student->level === 'A Level' || in_array($student->class, ['Form 5', 'Form 6'])) {
+            return 'A Level';
+        } elseif ($student->level === 'O Level' || in_array($student->class, ['Form 1', 'Form 2', 'Form 3', 'Form 4'])) {
+            return 'O Level';
+        }
+
+        return null;
     }
 } 
