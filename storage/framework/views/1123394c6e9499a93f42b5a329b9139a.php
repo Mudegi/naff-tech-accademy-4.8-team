@@ -291,7 +291,7 @@ unset($__errorArgs, $__bag); ?>
                             <input type="date" 
                                    id="date_of_birth" 
                                    name="date_of_birth" 
-                                   value="<?php echo e(old('date_of_birth', $studentUser->student->date_of_birth ? $studentUser->student->date_of_birth->format('Y-m-d') : '')); ?>"
+                                   value="<?php echo e(old('date_of_birth', ($studentUser->student && $studentUser->student->date_of_birth) ? $studentUser->student->date_of_birth->format('Y-m-d') : '')); ?>"
                                    class="form-input">
                             <?php $__errorArgs = ['date_of_birth'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');

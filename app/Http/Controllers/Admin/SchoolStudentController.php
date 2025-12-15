@@ -142,14 +142,16 @@ class SchoolStudentController extends Controller
             $studentsByClass = $allStudents->groupBy(function($user) {
                 return $user->student->class_id ?? 'unassigned';
             });
-
-            return view('admin.school.students.index', compact('studentsByClass', 'classes', 'levels'));
+            // Also pass an empty paginator for $students to avoid undefined variable in view
+            $students = collect([]);
+            return view('admin.school.students.index', compact('studentsByClass', 'students', 'classes', 'levels'));
         } else {
             // Show filtered flat list
             $students = $query->latest()->paginate(15);
             $students->appends($request->query());
-
-            return view('admin.school.students.index', compact('students', 'classes', 'levels'));
+            // Also pass an empty $studentsByClass for view compatibility
+            $studentsByClass = collect([]);
+            return view('admin.school.students.index', compact('students', 'studentsByClass', 'classes', 'levels'));
         }
     }
 
