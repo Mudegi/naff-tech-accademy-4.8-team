@@ -26,8 +26,9 @@ class HomeController extends Controller
         $packages = SubscriptionPackage::where('is_active', true)->get();
         $statistics = Statistic::where('is_active', true)->orderBy('display_order')->get();
         $teams = Team::active()->ordered()->get();
+        $welcomePage = WelcomeLink::first();
         
-        return view('frontend.pages.home', compact('subjects', 'packages', 'statistics', 'teams'));
+        return view('frontend.pages.home', compact('subjects', 'packages', 'statistics', 'teams', 'welcomePage'));
     }
 
     public function about()

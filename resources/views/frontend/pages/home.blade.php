@@ -8,44 +8,24 @@
 <section class="relative bg-gray-900 h-screen" x-data="{ activeSlide: 0 }" x-init="setInterval(() => { activeSlide = (activeSlide + 1) % 10 }, 5000)">
     <!-- Background Images -->
     <div class="absolute inset-0">
-        <div x-show="activeSlide === 0" x-transition:enter="transition ease-out duration-1000" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="absolute inset-0">
-            <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1920&q=80" class="w-full h-full object-cover" alt="Students">
-        </div>
-        <div x-show="activeSlide === 1" x-transition:enter="transition ease-out duration-1000" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="absolute inset-0">
-            <img src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=1920&q=80" class="w-full h-full object-cover" alt="Students">
-        </div>
-        <div x-show="activeSlide === 2" x-transition:enter="transition ease-out duration-1000" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="absolute inset-0">
-            <img src="https://images.unsplash.com/photo-1577896851231-70ef18881754?w=1920&q=80" class="w-full h-full object-cover" alt="Classroom">
-        </div>
-        <div x-show="activeSlide === 3" x-transition:enter="transition ease-out duration-1000" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="absolute inset-0">
-            <img src="https://images.unsplash.com/photo-1509062522246-3755977927d7?w=1920&q=80" class="w-full h-full object-cover" alt="Students">
-        </div>
-        <div x-show="activeSlide === 4" x-transition:enter="transition ease-out duration-1000" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="absolute inset-0">
-            <img src="https://images.unsplash.com/photo-1531482615713-2afd69097998?w=1920&q=80" class="w-full h-full object-cover" alt="Library">
-        </div>
-        <div x-show="activeSlide === 5" x-transition:enter="transition ease-out duration-1000" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="absolute inset-0">
-            <img src="https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=1920&q=80" class="w-full h-full object-cover" alt="Computer Lab">
-        </div>
-        <div x-show="activeSlide === 6" x-transition:enter="transition ease-out duration-1000" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="absolute inset-0">
-            <img src="https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=1920&q=80" class="w-full h-full object-cover" alt="Discussion">
-        </div>
-        <div x-show="activeSlide === 7" x-transition:enter="transition ease-out duration-1000" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="absolute inset-0">
-            <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1920&q=80" class="w-full h-full object-cover" alt="Group Study">
-        </div>
-        <div x-show="activeSlide === 8" x-transition:enter="transition ease-out duration-1000" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="absolute inset-0">
-            <img src="https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=1920&q=80" class="w-full h-full object-cover" alt="Lecture">
-        </div>
-        <div x-show="activeSlide === 9" x-transition:enter="transition ease-out duration-1000" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="absolute inset-0">
-            <img src="https://images.unsplash.com/photo-1513258496099-48168024aec0?w=1920&q=80" class="w-full h-full object-cover" alt="Workshop">
-        </div>
+        @for($i = 1; $i <= 10; $i++)
+            @php
+                $imageField = 'hero_image_' . $i;
+                $imagePath = $welcomePage && $welcomePage->$imageField ? Storage::url($welcomePage->$imageField) : null;
+                $fallbackImage = 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1920&q=80';
+            @endphp
+            <div x-show="activeSlide === {{ $i - 1 }}" x-transition:enter="transition ease-out duration-1000" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="absolute inset-0">
+                <img src="{{ $imagePath ?? $fallbackImage }}" class="w-full h-full object-cover" alt="Hero Image {{ $i }}">
+            </div>
+        @endfor
         <div class="absolute inset-0 bg-black bg-opacity-60"></div>
     </div>
     
     <!-- Hero Content -->
     <div class="relative z-10 flex items-center justify-center h-full">
         <div class="text-center px-4 max-w-4xl">
-            <h1 class="text-5xl md:text-6xl font-bold text-white mb-6">Welcome to Naf Academy</h1>
-            <p class="text-xl md:text-2xl text-gray-200 mb-8">Empowering the next generation of tech leaders through quality education and hands-on learning experiences.</p>
+            <h1 class="text-5xl md:text-6xl font-bold text-white mb-6">{{ $welcomePage->hero_title ?? 'Welcome to Naf Academy' }}</h1>
+            <p class="text-xl md:text-2xl text-gray-200 mb-8">{{ $welcomePage->hero_subtitle ?? 'Empowering the next generation of tech leaders through quality education and hands-on learning experiences.' }}</p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
                 <a href="{{ route('register') }}" class="px-8 py-4 bg-indigo-600 text-white text-lg font-semibold rounded-full hover:bg-indigo-700 transition">Get Started</a>
                 <a href="{{ route('subjects') }}" class="px-8 py-4 bg-white text-indigo-600 text-lg font-semibold rounded-full hover:bg-gray-100 transition">Explore Courses</a>
