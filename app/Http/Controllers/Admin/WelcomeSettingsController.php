@@ -109,19 +109,37 @@ class WelcomeSettingsController extends Controller
             $validated = $request->validate($rules);
 
             // Handle file uploads
+            $uploadedCount = 0;
+            $uploadErrors = [];
+            
             foreach ($imageFields as $field) {
                 if ($request->hasFile($field)) {
-                    // Validate the uploaded file
-                    $file = $request->file($field);
-                    
-                    // Delete old image if exists
-                    if ($welcomePage->$field && Storage::exists('public/' . $welcomePage->$field)) {
-                        Storage::delete('public/' . $welcomePage->$field);
-                    }
+                    try {
+                        $file = $request->file($field);
+                        
+                        // Check if file is valid
+                        if (!$file->isValid()) {
+                            $uploadErrors[] = "$field: Invalid file upload";
+                            continue;
+                        }
+                        
+                        // Delete old image if exists
+                        if ($welcomePage->$field && Storage::exists('public/' . $welcomePage->$field)) {
+                            Storage::delete('public/' . $welcomePage->$field);
+                        }
 
-                    // Store new image
-                    $path = $file->store('welcome-images', 'public');
-                    $validated[$field] = $path;
+                        // Store new image
+                        $path = $file->store('welcome-images', 'public');
+                        
+                        if ($path) {
+                            $validated[$field] = $path;
+                            $uploadedCount++;
+                        } else {
+                            $uploadErrors[] = "$field: Failed to store file";
+                        }
+                    } catch (\Exception $e) {
+                        $uploadErrors[] = "$field: " . $e->getMessage();
+                    }
                 } else {
                     // Keep existing image if no new file uploaded
                     if ($welcomePage->$field) {
@@ -133,8 +151,16 @@ class WelcomeSettingsController extends Controller
             $welcomePage->fill($validated);
             $welcomePage->save();
 
+            $message = 'Welcome page settings updated successfully.';
+            if ($uploadedCount > 0) {
+                $message .= " ($uploadedCount images uploaded)";
+            }
+            if (!empty($uploadErrors)) {
+                $message .= " Errors: " . implode(', ', $uploadErrors);
+            }
+
             return redirect()->route('admin.settings.welcome')
-                ->with('success', 'Welcome page settings updated successfully.')
+                ->with('success', $message)
                 ->with('status', 'success');
         } catch (\Exception $e) {
             return redirect()->back()
