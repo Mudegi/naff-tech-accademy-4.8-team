@@ -554,16 +554,18 @@ class UserPreferenceController extends Controller
         // Check if user has access to this resource
         $hasAccess = false;
         
+        // Parents get access to resources available to their children
+        if ($user->account_type === 'parent') {
+            $hasAccess = true;
+        }
         // School students get free access to their school's resources
-        if ($user->account_type === 'student' && $user->school_id) {
+        elseif ($user->account_type === 'student' && $user->school_id) {
             // Check if resource is assigned to student's school
             $isAssignedToSchool = $resource->school_id === $user->school_id 
                 || $resource->schools->contains('id', $user->school_id);
             
             if ($isAssignedToSchool) {
-                // Check if resource grade level matches student's grade level
-                $studentGradeLevel = $this->getStudentGradeLevel($user);
-                $hasAccess = $resource->grade_level === $studentGradeLevel;
+                $hasAccess = true; // Allow access to all school resources
             }
         } else {
             // Check subscription-based access (existing logic)
