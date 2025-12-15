@@ -24,6 +24,7 @@ class Student extends Model
         'phone_verified',
         'classes',
         'class',
+        'class_id',
         'level',
         'is_referral',
         'referee_name',
@@ -53,6 +54,11 @@ class Student extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function class()
+    {
+        return $this->belongsTo(SchoolClass::class, 'class_id');
     }
 
     public function subscriptionPackage()

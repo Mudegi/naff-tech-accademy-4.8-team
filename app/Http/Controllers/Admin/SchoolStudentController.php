@@ -80,9 +80,19 @@ class SchoolStudentController extends Controller
                 ->with('error', 'No school associated with your account.');
         }
 
+        // Get all classes for the school (system classes OR school-specific classes)
+        $classes = SchoolClass::withoutGlobalScope('school')
+            ->where(function($query) use ($school) {
+                $query->whereNull('school_id') // System classes
+                      ->orWhere('school_id', $school->id); // School-specific classes
+            })
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
+
         $query = User::where('school_id', $school->id)
             ->where('account_type', 'student')
-            ->with('student');
+            ->with(['student', 'student.class']);
 
         // Apply search filter
         if ($request->filled('search')) {
@@ -96,6 +106,13 @@ class SchoolStudentController extends Controller
                          ->orWhere('first_name', 'like', '%' . $searchTerm . '%')
                          ->orWhere('last_name', 'like', '%' . $searchTerm . '%');
                   });
+            });
+        }
+
+        // Apply class filter
+        if ($request->filled('class_id')) {
+            $query->whereHas('student', function($studentQuery) use ($request) {
+                $studentQuery->where('class_id', $request->class_id);
             });
         }
 
@@ -115,12 +132,25 @@ class SchoolStudentController extends Controller
             });
         }
 
-        $students = $query->latest()->paginate(15);
-        $students->appends($request->query());
-
+        // Get levels for dropdown
         $levels = $this->getStudentLevels();
 
-        return view('admin.school.students.index', compact('students', 'levels'));
+        // If no filters, group by class, otherwise show flat list
+        if (!$request->hasAny(['search', 'class_id', 'status', 'level'])) {
+            // Group students by class
+            $allStudents = $query->get();
+            $studentsByClass = $allStudents->groupBy(function($user) {
+                return $user->student->class_id ?? 'unassigned';
+            });
+
+            return view('admin.school.students.index', compact('studentsByClass', 'classes', 'levels'));
+        } else {
+            // Show filtered flat list
+            $students = $query->latest()->paginate(15);
+            $students->appends($request->query());
+
+            return view('admin.school.students.index', compact('students', 'classes', 'levels'));
+        }
     }
 
     /**
@@ -138,9 +168,12 @@ class SchoolStudentController extends Controller
                 ->with('error', 'No school associated with your account.');
         }
 
-        // Load system classes (Form 1-6) - schools use system-preloaded classes
+        // Load system classes (available to all schools) OR school-specific classes
         $classes = SchoolClass::withoutGlobalScope('school')
-            ->where('is_system_class', true)
+            ->where(function($query) use ($school) {
+                $query->whereNull('school_id') // System classes
+                      ->orWhere('school_id', $school->id); // School-specific classes
+            })
             ->where('is_active', true)
             ->orderBy('name')
             ->get();
@@ -201,6 +234,19 @@ class SchoolStudentController extends Controller
             'is_active' => $request->has('is_active'),
         ]);
 
+        // Find class_id from class name (check both system and school-specific classes)
+        $classId = null;
+        if ($request->class) {
+            $classObj = SchoolClass::withoutGlobalScope('school')
+                ->where(function($query) use ($school) {
+                    $query->whereNull('school_id') // System classes
+                          ->orWhere('school_id', $school->id); // School-specific classes
+                })
+                ->where('name', $request->class)
+                ->first();
+            $classId = $classObj ? $classObj->id : null;
+        }
+
         // Create student profile
         $student = Student::create([
             'user_id' => $userAccount->id,
@@ -211,6 +257,7 @@ class SchoolStudentController extends Controller
             'middle_name' => $request->middle_name,
             'registration_number' => $request->registration_number,
             'class' => $request->class,
+            'class_id' => $classId,
             'date_of_birth' => $request->date_of_birth,
             'school_name' => $school->name,
             'is_active' => $request->has('is_active'),
@@ -252,9 +299,12 @@ class SchoolStudentController extends Controller
             ->with('student')
             ->findOrFail($id);
 
-        // Load system classes (Form 1-6) - schools use system-preloaded classes
+        // Load system classes (available to all schools) OR school-specific classes
         $classes = SchoolClass::withoutGlobalScope('school')
-            ->where('is_system_class', true)
+            ->where(function($query) use ($school) {
+                $query->whereNull('school_id') // System classes
+                      ->orWhere('school_id', $school->id); // School-specific classes
+            })
             ->where('is_active', true)
             ->orderBy('name')
             ->get();
@@ -330,11 +380,25 @@ class SchoolStudentController extends Controller
 
         // Update student profile
         if ($studentUser->student) {
+            // Find class_id from class name (check both system and school-specific classes)
+            $classId = null;
+            if ($request->class) {
+                $classObj = SchoolClass::withoutGlobalScope('school')
+                    ->where(function($query) use ($school) {
+                        $query->whereNull('school_id') // System classes
+                              ->orWhere('school_id', $school->id); // School-specific classes
+                    })
+                    ->where('name', $request->class)
+                    ->first();
+                $classId = $classObj ? $classObj->id : null;
+            }
+
             $studentUser->student->first_name = $request->first_name;
             $studentUser->student->last_name = $request->last_name;
             $studentUser->student->middle_name = $request->middle_name;
             $studentUser->student->registration_number = $request->registration_number;
             $studentUser->student->class = $request->class;
+            $studentUser->student->class_id = $classId;
             $studentUser->student->date_of_birth = $request->date_of_birth;
             $studentUser->student->is_active = $request->has('is_active');
             $studentUser->student->level = $request->level;
@@ -367,7 +431,17 @@ class SchoolStudentController extends Controller
                 ->with('error', 'No school associated with your account.');
         }
 
-        return view('admin.school.students.import');
+        // Get all active classes for dropdown (system classes OR school-specific classes)
+        $classes = SchoolClass::withoutGlobalScope('school')
+            ->where(function($query) use ($school) {
+                $query->whereNull('school_id') // System classes
+                      ->orWhere('school_id', $school->id); // School-specific classes
+            })
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
+
+        return view('admin.school.students.import', compact('classes'));
     }
 
     /**
@@ -388,6 +462,7 @@ class SchoolStudentController extends Controller
         $validator = Validator::make($request->all(), [
             'csv_file' => 'required|file|mimes:csv,txt,xlsx,xls|max:10240',
             'generate_passwords' => 'boolean',
+            'class_id' => 'nullable|exists:school_classes,id',
         ]);
 
         if ($validator->fails()) {
@@ -398,6 +473,7 @@ class SchoolStudentController extends Controller
 
         $file = $request->file('csv_file');
         $generatePasswords = $request->has('generate_passwords');
+        $assignToClassId = $request->input('class_id'); // Get class_id if provided
         $fileExtension = strtolower($file->getClientOriginalExtension());
         
         $results = [
@@ -504,6 +580,32 @@ class SchoolStudentController extends Controller
                         'is_active' => true,
                     ]);
 
+                    // Determine class_id: use form selection if provided, otherwise use CSV class data
+                    $finalClassId = $assignToClassId; // Use form-selected class if provided
+                    $finalClassName = null;
+                    
+                    if ($assignToClassId) {
+                        // Get class name from class_id
+                        $classObj = SchoolClass::find($assignToClassId);
+                        $finalClassName = $classObj ? $classObj->name : null;
+                    } elseif (!empty($data['class'])) {
+                        // Try to find class by name from CSV (check both system and school-specific classes)
+                        $classObj = SchoolClass::withoutGlobalScope('school')
+                            ->where(function($query) use ($school) {
+                                $query->whereNull('school_id') // System classes
+                                      ->orWhere('school_id', $school->id); // School-specific classes
+                            })
+                            ->where('name', $data['class'])
+                            ->first();
+                        if ($classObj) {
+                            $finalClassId = $classObj->id;
+                            $finalClassName = $classObj->name;
+                        } else {
+                            // Just use the text class name if no matching class found
+                            $finalClassName = $data['class'];
+                        }
+                    }
+
                     // Create student profile
                     $student = Student::create([
                         'user_id' => $userAccount->id,
@@ -513,7 +615,8 @@ class SchoolStudentController extends Controller
                         'last_name' => $data['last_name'],
                         'middle_name' => !empty($data['middle_name']) ? $data['middle_name'] : null,
                         'registration_number' => !empty($data['registration_number']) ? $data['registration_number'] : null,
-                        'class' => !empty($data['class']) ? $data['class'] : null,
+                        'class' => $finalClassName,
+                        'class_id' => $finalClassId, // Assign class_id
                         'date_of_birth' => !empty($data['date_of_birth']) ? $data['date_of_birth'] : null,
                         'school_name' => $school->name,
                         'is_active' => true,

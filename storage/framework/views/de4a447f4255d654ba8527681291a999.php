@@ -1,6 +1,6 @@
-@extends('layouts.dashboard')
 
-@section('content')
+
+<?php $__env->startSection('content'); ?>
 <div class="dashboard-content-inner students-page">
     <!-- Page Title & Breadcrumbs -->
     <div class="dashboard-breadcrumbs">
@@ -17,23 +17,25 @@
         </div>
     </div>
 
-    @if (session('success'))
+    <?php if(session('success')): ?>
         <div class="alert alert-success mb-6 animate-slide-down">
             <i class="fas fa-check-circle mr-2"></i>
-            {{ session('success') }}
-        </div>
-    @endif
+            <?php echo e(session('success')); ?>
 
-    @if (session('error'))
+        </div>
+    <?php endif; ?>
+
+    <?php if(session('error')): ?>
         <div class="alert alert-error mb-6 animate-slide-down">
             <i class="fas fa-exclamation-circle mr-2"></i>
-            {{ session('error') }}
+            <?php echo e(session('error')); ?>
+
         </div>
-    @endif
+    <?php endif; ?>
 
     <!-- Display New Student Credentials -->
-    @if (session('show_credentials') && session('new_student_credentials'))
-        @php $credentials = session('new_student_credentials'); @endphp
+    <?php if(session('show_credentials') && session('new_student_credentials')): ?>
+        <?php $credentials = session('new_student_credentials'); ?>
         <div class="credentials-card credentials-card-blue mb-6">
             <div class="credentials-header">
                 <div class="credentials-icon">
@@ -48,25 +50,25 @@
                 <div class="credentials-grid">
                     <div class="credential-item">
                         <span class="credential-label">Name:</span>
-                        <span class="credential-value">{{ $credentials['name'] }}</span>
+                        <span class="credential-value"><?php echo e($credentials['name']); ?></span>
                     </div>
                     <div class="credential-item">
                         <span class="credential-label">Email:</span>
-                        <span class="credential-value">{{ $credentials['email'] ?? 'N/A' }}</span>
+                        <span class="credential-value"><?php echo e($credentials['email'] ?? 'N/A'); ?></span>
                     </div>
                     <div class="credential-item">
                         <span class="credential-label">Phone:</span>
-                        <span class="credential-value">{{ $credentials['phone_number'] }}</span>
+                        <span class="credential-value"><?php echo e($credentials['phone_number']); ?></span>
                     </div>
-                    @if(isset($credentials['registration_number']))
+                    <?php if(isset($credentials['registration_number'])): ?>
                     <div class="credential-item">
                         <span class="credential-label">Registration #:</span>
-                        <span class="credential-value">{{ $credentials['registration_number'] }}</span>
+                        <span class="credential-value"><?php echo e($credentials['registration_number']); ?></span>
                     </div>
-                    @endif
+                    <?php endif; ?>
                     <div class="credential-item credential-item-password">
                         <span class="credential-label">Password:</span>
-                        <span class="credential-value" id="new-password">{{ $credentials['password'] }}</span>
+                        <span class="credential-value" id="new-password"><?php echo e($credentials['password']); ?></span>
                         <button onclick="copyPassword('new-password')" class="copy-password-btn" title="Copy password">
                             <i class="fas fa-copy"></i>
                         </button>
@@ -84,11 +86,11 @@
                 </button>
             </div>
         </div>
-    @endif
+    <?php endif; ?>
 
     <!-- Display Updated Student Credentials -->
-    @if (session('show_updated_credentials') && session('updated_student_credentials'))
-        @php $credentials = session('updated_student_credentials'); @endphp
+    <?php if(session('show_updated_credentials') && session('updated_student_credentials')): ?>
+        <?php $credentials = session('updated_student_credentials'); ?>
         <div class="credentials-card credentials-card-green mb-6">
             <div class="credentials-header">
                 <div class="credentials-icon">
@@ -103,15 +105,15 @@
                 <div class="credentials-grid">
                     <div class="credential-item">
                         <span class="credential-label">Name:</span>
-                        <span class="credential-value">{{ $credentials['name'] }}</span>
+                        <span class="credential-value"><?php echo e($credentials['name']); ?></span>
                     </div>
                     <div class="credential-item">
                         <span class="credential-label">Email:</span>
-                        <span class="credential-value">{{ $credentials['email'] ?? 'N/A' }}</span>
+                        <span class="credential-value"><?php echo e($credentials['email'] ?? 'N/A'); ?></span>
                     </div>
                     <div class="credential-item credential-item-password">
                         <span class="credential-label">New Password:</span>
-                        <span class="credential-value" id="updated-password">{{ $credentials['password'] }}</span>
+                        <span class="credential-value" id="updated-password"><?php echo e($credentials['password']); ?></span>
                         <button onclick="copyPassword('updated-password')" class="copy-password-btn" title="Copy password">
                             <i class="fas fa-copy"></i>
                         </button>
@@ -125,7 +127,7 @@
                 </button>
             </div>
         </div>
-    @endif
+    <?php endif; ?>
 
     <!-- Header Actions Card -->
     <div class="action-card mb-6">
@@ -136,80 +138,83 @@
             </div>
         </div>
         <div class="action-card-body">
-            <form method="GET" action="{{ route('admin.school.students.index') }}" class="search-form">
+            <form method="GET" action="<?php echo e(route('admin.school.students.index')); ?>" class="search-form">
                 <div class="search-input-group">
                     <div class="search-input-wrapper">
                         <i class="fas fa-search search-icon"></i>
                         <input type="text" 
                                name="search" 
-                               value="{{ request('search') }}" 
+                               value="<?php echo e(request('search')); ?>" 
                                placeholder="Search by name, email, phone, or registration number..."
                                class="search-input">
                     </div>
                     <select name="class_id" class="filter-select">
                         <option value="">All Classes</option>
-                        @foreach($classes as $class)
-                            <option value="{{ $class->id }}" {{ request('class_id') == $class->id ? 'selected' : '' }}>
-                                {{ $class->name }}
+                        <?php $__currentLoopData = $classes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $class): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($class->id); ?>" <?php echo e(request('class_id') == $class->id ? 'selected' : ''); ?>>
+                                <?php echo e($class->name); ?>
+
                             </option>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </select>
                     <select name="status" class="filter-select">
                         <option value="">All Status</option>
-                        <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Active</option>
-                        <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
+                        <option value="active" <?php echo e(request('status') == 'active' ? 'selected' : ''); ?>>Active</option>
+                        <option value="inactive" <?php echo e(request('status') == 'inactive' ? 'selected' : ''); ?>>Inactive</option>
                     </select>
                     <select name="level" class="filter-select">
                         <option value="">All Levels</option>
-                        @foreach($levels as $value => $label)
-                            <option value="{{ $value }}" {{ request('level') === $value ? 'selected' : '' }}>
-                                {{ $label }}
+                        <?php $__currentLoopData = $levels; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $value => $label): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($value); ?>" <?php echo e(request('level') === $value ? 'selected' : ''); ?>>
+                                <?php echo e($label); ?>
+
                             </option>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </select>
                     <button type="submit" class="btn-search">
                         <i class="fas fa-search mr-2"></i>
                         Search
                     </button>
-                    @if(request('search') || request('status') || request('level') || request('class_id'))
-                        <a href="{{ route('admin.school.students.index') }}" class="btn-clear">
+                    <?php if(request('search') || request('status') || request('level') || request('class_id')): ?>
+                        <a href="<?php echo e(route('admin.school.students.index')); ?>" class="btn-clear">
                             <i class="fas fa-times mr-2"></i>
                             Clear
                         </a>
-                    @endif
+                    <?php endif; ?>
                 </div>
             </form>
         </div>
     </div>
 
     <!-- Action Buttons -->
-    @if(Auth::user()->isSchoolAdmin() || Auth::user()->isDirectorOfStudies())
+    <?php if(Auth::user()->isSchoolAdmin() || Auth::user()->isDirectorOfStudies()): ?>
     <div class="action-buttons mb-6">
-        <a href="{{ route('admin.school.students.import') }}" class="btn-action btn-action-green">
+        <a href="<?php echo e(route('admin.school.students.import')); ?>" class="btn-action btn-action-green">
             <i class="fas fa-file-import mr-2"></i>
             Import CSV
         </a>
-        <a href="{{ route('admin.school.students.create') }}" class="btn-action btn-action-primary">
+        <a href="<?php echo e(route('admin.school.students.create')); ?>" class="btn-action btn-action-primary">
             <i class="fas fa-plus mr-2"></i>
             Add Student
         </a>
     </div>
-    @endif
+    <?php endif; ?>
 
     <!-- Students Display -->
-    @if(isset($studentsByClass))
+    <?php if(isset($studentsByClass)): ?>
         <!-- Grouped by Class View -->
-        @foreach($classes as $class)
-            @php
+        <?php $__currentLoopData = $classes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $class): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+            <?php
                 $classStudents = $studentsByClass->get($class->id, collect());
-            @endphp
-            @if($classStudents->count() > 0)
+            ?>
+            <?php if($classStudents->count() > 0): ?>
             <div class="table-card mb-6">
                 <div class="table-card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
                     <div class="table-card-title" style="color: white;">
                         <i class="fas fa-users mr-2"></i>
-                        {{ $class->name }}
-                        <span class="table-count" style="background: rgba(255,255,255,0.2);">({{ $classStudents->count() }})</span>
+                        <?php echo e($class->name); ?>
+
+                        <span class="table-count" style="background: rgba(255,255,255,0.2);">(<?php echo e($classStudents->count()); ?>)</span>
                     </div>
                 </div>
                 <div class="table-container">
@@ -227,7 +232,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach($classStudents as $student)
+                            <?php $__currentLoopData = $classStudents; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $student): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                             <tr>
                                 <td>
                                     <div class="table-cell-content">
@@ -235,88 +240,94 @@
                                             <i class="fas fa-user-graduate"></i>
                                         </div>
                                         <div>
-                                            <div class="table-name">{{ $student->name }}</div>
-                                            @if($student->student && $student->student->date_of_birth)
-                                                <div class="table-meta">DOB: {{ $student->student->date_of_birth->format('M d, Y') }}</div>
-                                            @endif
+                                            <div class="table-name"><?php echo e($student->name); ?></div>
+                                            <?php if($student->student && $student->student->date_of_birth): ?>
+                                                <div class="table-meta">DOB: <?php echo e($student->student->date_of_birth->format('M d, Y')); ?></div>
+                                            <?php endif; ?>
                                         </div>
                                     </div>
                                 </td>
                                 <td>
                                     <div class="table-email">
                                         <i class="fas fa-envelope table-icon"></i>
-                                        {{ $student->email ?? 'N/A' }}
+                                        <?php echo e($student->email ?? 'N/A'); ?>
+
                                     </div>
                                 </td>
                                 <td>
                                     <div class="table-phone">
                                         <i class="fas fa-phone table-icon"></i>
-                                        {{ $student->phone_number ?? 'N/A' }}
+                                        <?php echo e($student->phone_number ?? 'N/A'); ?>
+
                                     </div>
                                 </td>
                                 <td>
                                     <span class="table-badge table-badge-info">
-                                        {{ $student->student->registration_number ?? 'N/A' }}
+                                        <?php echo e($student->student->registration_number ?? 'N/A'); ?>
+
                                     </span>
                                 </td>
                                 <td>
                                     <span class="table-badge table-badge-level">
-                                        {{ $student->student->level ?? 'Unspecified' }}
+                                        <?php echo e($student->student->level ?? 'Unspecified'); ?>
+
                                     </span>
                                 </td>
                                 <td>
-                                    @if($student->student && $student->student->combination)
+                                    <?php if($student->student && $student->student->combination): ?>
                                         <span class="table-badge table-badge-info">
-                                            {{ $student->student->combination }}
+                                            <?php echo e($student->student->combination); ?>
+
                                         </span>
-                                    @else
+                                    <?php else: ?>
                                         <span class="table-badge table-badge-secondary">
                                             N/A
                                         </span>
-                                    @endif
+                                    <?php endif; ?>
                                 </td>
                                 <td>
-                                    <span class="table-badge {{ $student->is_active ? 'table-badge-success' : 'table-badge-danger' }}">
+                                    <span class="table-badge <?php echo e($student->is_active ? 'table-badge-success' : 'table-badge-danger'); ?>">
                                         <i class="fas fa-circle"></i>
-                                        {{ $student->is_active ? 'Active' : 'Inactive' }}
+                                        <?php echo e($student->is_active ? 'Active' : 'Inactive'); ?>
+
                                     </span>
                                 </td>
                                 <td>
                                     <div class="table-actions">
-                                        @if(Auth::user()->isSchoolAdmin() || Auth::user()->isDirectorOfStudies())
-                                        <a href="{{ route('admin.school.students.edit', $student->id) }}" class="table-action-btn table-action-edit" title="Edit">
+                                        <?php if(Auth::user()->isSchoolAdmin() || Auth::user()->isDirectorOfStudies()): ?>
+                                        <a href="<?php echo e(route('admin.school.students.edit', $student->id)); ?>" class="table-action-btn table-action-edit" title="Edit">
                                             <i class="fas fa-edit"></i>
                                         </a>
-                                        <form action="{{ route('admin.school.students.destroy', $student->id) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this student?');">
-                                            @csrf
-                                            @method('DELETE')
+                                        <form action="<?php echo e(route('admin.school.students.destroy', $student->id)); ?>" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this student?');">
+                                            <?php echo csrf_field(); ?>
+                                            <?php echo method_field('DELETE'); ?>
                                             <button type="submit" class="table-action-btn table-action-delete" title="Delete">
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                         </form>
-                                        @endif
+                                        <?php endif; ?>
                                     </div>
                                 </td>
                             </tr>
-                            @endforeach
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         </tbody>
                     </table>
                 </div>
             </div>
-            @endif
-        @endforeach
+            <?php endif; ?>
+        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
 
         <!-- Unassigned Students -->
-        @php
+        <?php
             $unassignedStudents = $studentsByClass->get('unassigned', collect());
-        @endphp
-        @if($unassignedStudents->count() > 0)
+        ?>
+        <?php if($unassignedStudents->count() > 0): ?>
         <div class="table-card mb-6">
             <div class="table-card-header" style="background: #dc3545;">
                 <div class="table-card-title" style="color: white;">
                     <i class="fas fa-exclamation-triangle mr-2"></i>
                     Unassigned Students - Need Class Assignment
-                    <span class="table-count" style="background: rgba(255,255,255,0.2);">({{ $unassignedStudents->count() }})</span>
+                    <span class="table-count" style="background: rgba(255,255,255,0.2);">(<?php echo e($unassignedStudents->count()); ?>)</span>
                 </div>
             </div>
             <div class="alert alert-warning" style="margin: 1rem; background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 1rem;">
@@ -337,7 +348,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($unassignedStudents as $student)
+                        <?php $__currentLoopData = $unassignedStudents; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $student): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                         <tr>
                             <td>
                                 <div class="table-cell-content">
@@ -345,43 +356,44 @@
                                         <i class="fas fa-user-graduate"></i>
                                     </div>
                                     <div>
-                                        <div class="table-name">{{ $student->name }}</div>
+                                        <div class="table-name"><?php echo e($student->name); ?></div>
                                     </div>
                                 </div>
                             </td>
-                            <td>{{ $student->email ?? 'N/A' }}</td>
-                            <td>{{ $student->phone_number ?? 'N/A' }}</td>
-                            <td>{{ $student->student->registration_number ?? 'N/A' }}</td>
-                            <td>{{ $student->student->level ?? 'Unspecified' }}</td>
+                            <td><?php echo e($student->email ?? 'N/A'); ?></td>
+                            <td><?php echo e($student->phone_number ?? 'N/A'); ?></td>
+                            <td><?php echo e($student->student->registration_number ?? 'N/A'); ?></td>
+                            <td><?php echo e($student->student->level ?? 'Unspecified'); ?></td>
                             <td>
-                                <span class="table-badge {{ $student->is_active ? 'table-badge-success' : 'table-badge-danger' }}">
-                                    {{ $student->is_active ? 'Active' : 'Inactive' }}
+                                <span class="table-badge <?php echo e($student->is_active ? 'table-badge-success' : 'table-badge-danger'); ?>">
+                                    <?php echo e($student->is_active ? 'Active' : 'Inactive'); ?>
+
                                 </span>
                             </td>
                             <td>
                                 <div class="table-actions">
-                                    @if(Auth::user()->isSchoolAdmin() || Auth::user()->isDirectorOfStudies())
-                                    <a href="{{ route('admin.school.students.edit', $student->id) }}" class="table-action-btn table-action-edit" title="Edit">
+                                    <?php if(Auth::user()->isSchoolAdmin() || Auth::user()->isDirectorOfStudies()): ?>
+                                    <a href="<?php echo e(route('admin.school.students.edit', $student->id)); ?>" class="table-action-btn table-action-edit" title="Edit">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    @endif
+                                    <?php endif; ?>
                                 </div>
                             </td>
                         </tr>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </tbody>
                 </table>
             </div>
         </div>
-        @endif
-    @else
+        <?php endif; ?>
+    <?php else: ?>
         <!-- Filtered Flat List View -->
         <div class="table-card">
             <div class="table-card-header">
                 <div class="table-card-title">
                     <i class="fas fa-list mr-2"></i>
                     Students List
-                    <span class="table-count">({{ $students->total() }})</span>
+                    <span class="table-count">(<?php echo e($students->total()); ?>)</span>
                 </div>
             </div>
             <div class="table-container">
@@ -400,7 +412,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse($students as $student)
+                        <?php $__empty_1 = true; $__currentLoopData = $students; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $student): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                     <tr>
                         <td>
                             <div class="table-cell-content">
@@ -408,109 +420,117 @@
                                     <i class="fas fa-user-graduate"></i>
                                 </div>
                                 <div>
-                                    <div class="table-name">{{ $student->name }}</div>
-                                    @if($student->student && $student->student->date_of_birth)
-                                        <div class="table-meta">DOB: {{ $student->student->date_of_birth->format('M d, Y') }}</div>
-                                    @endif
+                                    <div class="table-name"><?php echo e($student->name); ?></div>
+                                    <?php if($student->student && $student->student->date_of_birth): ?>
+                                        <div class="table-meta">DOB: <?php echo e($student->student->date_of_birth->format('M d, Y')); ?></div>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         </td>
                         <td>
                             <div class="table-email">
                                 <i class="fas fa-envelope table-icon"></i>
-                                {{ $student->email ?? 'N/A' }}
+                                <?php echo e($student->email ?? 'N/A'); ?>
+
                             </div>
                         </td>
                         <td>
                             <div class="table-phone">
                                 <i class="fas fa-phone table-icon"></i>
-                                {{ $student->phone_number ?? 'N/A' }}
+                                <?php echo e($student->phone_number ?? 'N/A'); ?>
+
                             </div>
                         </td>
                         <td>
                             <span class="table-badge table-badge-info">
-                                {{ $student->student->registration_number ?? 'N/A' }}
+                                <?php echo e($student->student->registration_number ?? 'N/A'); ?>
+
                             </span>
                         </td>
                         <td>
                             <span class="table-badge table-badge-secondary">
-                                {{ $student->student->class ?? 'N/A' }}
+                                <?php echo e($student->student->class ?? 'N/A'); ?>
+
                             </span>
                         </td>
                         <td>
                             <span class="table-badge table-badge-level">
-                                {{ $student->student->level ?? 'Unspecified' }}
+                                <?php echo e($student->student->level ?? 'Unspecified'); ?>
+
                             </span>
                         </td>
                         <td>
-                            @if($student->student && $student->student->combination)
+                            <?php if($student->student && $student->student->combination): ?>
                                 <span class="table-badge table-badge-info">
-                                    {{ $student->student->combination }}
+                                    <?php echo e($student->student->combination); ?>
+
                                 </span>
-                            @else
+                            <?php else: ?>
                                 <span class="table-badge table-badge-secondary">
                                     N/A
                                 </span>
-                            @endif
+                            <?php endif; ?>
                         </td>
                         <td>
-                            <span class="table-badge {{ $student->is_active ? 'table-badge-success' : 'table-badge-danger' }}">
+                            <span class="table-badge <?php echo e($student->is_active ? 'table-badge-success' : 'table-badge-danger'); ?>">
                                 <i class="fas fa-circle"></i>
-                                {{ $student->is_active ? 'Active' : 'Inactive' }}
+                                <?php echo e($student->is_active ? 'Active' : 'Inactive'); ?>
+
                             </span>
                         </td>
                         <td>
                             <div class="table-actions">
-                                @if(Auth::user()->isSchoolAdmin() || Auth::user()->isDirectorOfStudies())
-                                <a href="{{ route('admin.school.students.edit', $student->id) }}" class="table-action-btn table-action-edit" title="Edit">
+                                <?php if(Auth::user()->isSchoolAdmin() || Auth::user()->isDirectorOfStudies()): ?>
+                                <a href="<?php echo e(route('admin.school.students.edit', $student->id)); ?>" class="table-action-btn table-action-edit" title="Edit">
                                     <i class="fas fa-edit"></i>
                                 </a>
-                                <form action="{{ route('admin.school.students.destroy', $student->id) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this student? This action cannot be undone.');">
-                                    @csrf
-                                    @method('DELETE')
+                                <form action="<?php echo e(route('admin.school.students.destroy', $student->id)); ?>" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this student? This action cannot be undone.');">
+                                    <?php echo csrf_field(); ?>
+                                    <?php echo method_field('DELETE'); ?>
                                     <button type="submit" class="table-action-btn table-action-delete" title="Delete">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </form>
-                                @endif
+                                <?php endif; ?>
                             </div>
                         </td>
                     </tr>
-                    @empty
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                     <tr>
                         <td colspan="8" class="table-empty">
                             <div class="empty-state">
                                 <i class="fas fa-user-graduate empty-icon"></i>
                                 <h3 class="empty-title">No Students Found</h3>
                                 <p class="empty-text">
-                                    @if(request('search') || request('status'))
+                                    <?php if(request('search') || request('status')): ?>
                                         No students match your search criteria. Try adjusting your filters.
-                                    @else
+                                    <?php else: ?>
                                         Get started by adding your first student.
-                                    @endif
+                                    <?php endif; ?>
                                 </p>
-                                @if(Auth::user()->isSchoolAdmin() || Auth::user()->isDirectorOfStudies())
-                                <a href="{{ route('admin.school.students.create') }}" class="btn-empty-action">
+                                <?php if(Auth::user()->isSchoolAdmin() || Auth::user()->isDirectorOfStudies()): ?>
+                                <a href="<?php echo e(route('admin.school.students.create')); ?>" class="btn-empty-action">
                                     <i class="fas fa-plus mr-2"></i>
                                     Add Student
                                 </a>
-                                @endif
+                                <?php endif; ?>
                             </div>
                         </td>
                     </tr>
-                    @endforelse
+                    <?php endif; ?>
                 </tbody>
             </table>
         </div>
 
         <!-- Pagination -->
-        @if($students->hasPages())
+        <?php if($students->hasPages()): ?>
         <div class="pagination-wrapper">
-            {{ $students->links() }}
+            <?php echo e($students->links()); ?>
+
         </div>
-        @endif
+        <?php endif; ?>
     </div>
-    @endif
+    <?php endif; ?>
 </div>
 
 <style>
@@ -1199,10 +1219,10 @@ function copyPassword(elementId) {
 
 function copyNewCredentials() {
     const credentials = {
-        name: '{{ session("new_student_credentials.name") ?? "" }}',
-        email: '{{ session("new_student_credentials.email") ?? "" }}',
-        phone: '{{ session("new_student_credentials.phone_number") ?? "" }}',
-        regNumber: '{{ session("new_student_credentials.registration_number") ?? "" }}',
+        name: '<?php echo e(session("new_student_credentials.name") ?? ""); ?>',
+        email: '<?php echo e(session("new_student_credentials.email") ?? ""); ?>',
+        phone: '<?php echo e(session("new_student_credentials.phone_number") ?? ""); ?>',
+        regNumber: '<?php echo e(session("new_student_credentials.registration_number") ?? ""); ?>',
         password: document.getElementById('new-password').textContent
     };
     
@@ -1215,8 +1235,8 @@ function copyNewCredentials() {
 
 function copyUpdatedCredentials() {
     const credentials = {
-        name: '{{ session("updated_student_credentials.name") ?? "" }}',
-        email: '{{ session("updated_student_credentials.email") ?? "" }}',
+        name: '<?php echo e(session("updated_student_credentials.name") ?? ""); ?>',
+        email: '<?php echo e(session("updated_student_credentials.email") ?? ""); ?>',
         password: document.getElementById('updated-password').textContent
     };
     
@@ -1227,4 +1247,6 @@ function copyUpdatedCredentials() {
     });
 }
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.dashboard', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Users\user\Desktop\naff-tech-accademy-4.8-team\resources\views/admin/school/students/index.blade.php ENDPATH**/ ?>
