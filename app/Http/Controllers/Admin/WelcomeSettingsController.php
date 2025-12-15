@@ -86,28 +86,41 @@ class WelcomeSettingsController extends Controller
                 'vision_description' => 'nullable|string',
             ];
 
-            // Add image validation rules
+            // Add image validation rules with more flexible dimensions
             foreach ($imageFields as $field) {
-                $rules[$field] = 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120|dimensions:min_width=1200,min_height=600';
+                $rules[$field] = 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240|dimensions:min_width=800,min_height=400';
             }
 
-            $validated = $request->validate($rules);
-
+            // Get existing record first to preserve images
             $welcomePage = WelcomeLink::first();
             if (!$welcomePage) {
                 $welcomePage = new WelcomeLink();
             }
 
+            // Preserve existing images BEFORE validation
+            $dataToValidate = $request->all();
+            foreach ($imageFields as $field) {
+                if (!$request->hasFile($field) && $welcomePage->$field) {
+                    $dataToValidate[$field] = $welcomePage->$field;
+                }
+            }
+
+            // Validate only the data we're actually updating
+            $validated = $request->validate($rules);
+
             // Handle file uploads
             foreach ($imageFields as $field) {
                 if ($request->hasFile($field)) {
+                    // Validate the uploaded file
+                    $file = $request->file($field);
+                    
                     // Delete old image if exists
-                    if ($welcomePage->$field) {
+                    if ($welcomePage->$field && Storage::exists('public/' . $welcomePage->$field)) {
                         Storage::delete('public/' . $welcomePage->$field);
                     }
 
                     // Store new image
-                    $path = $request->file($field)->store('welcome-images', 'public');
+                    $path = $file->store('welcome-images', 'public');
                     $validated[$field] = $path;
                 } else {
                     // Keep existing image if no new file uploaded
