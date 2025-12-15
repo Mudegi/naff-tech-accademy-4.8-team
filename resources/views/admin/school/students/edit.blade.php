@@ -226,7 +226,7 @@
                             <input type="date" 
                                    id="date_of_birth" 
                                    name="date_of_birth" 
-                                   value="{{ old('date_of_birth', $studentUser->student->date_of_birth ? $studentUser->student->date_of_birth->format('Y-m-d') : '') }}"
+                                   value="{{ old('date_of_birth', ($studentUser->student && $studentUser->student->date_of_birth) ? $studentUser->student->date_of_birth->format('Y-m-d') : '') }}"
                                    class="form-input">
                             @error('date_of_birth')
                                 <p class="form-error">{{ $message }}</p>
