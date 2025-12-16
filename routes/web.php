@@ -431,7 +431,7 @@ Route::middleware(['auth', 'single.session', \App\Http\Middleware\CheckAccountTy
     // My Videos Route
     Route::get('/my-videos', [App\Http\Controllers\UserPreferenceController::class, 'myVideos'])->name('my-videos');
     Route::get('/debug-my-videos', [App\Http\Controllers\UserPreferenceController::class, 'debugMyVideos'])->name('debug-my-videos');
-    Route::get('/my-videos/{resource}', [App\Http\Controllers\UserPreferenceController::class, 'showMyVideo'])->name('my-videos.show');
+    Route::get('/my-videos/{id}', [App\Http\Controllers\UserPreferenceController::class, 'showMyVideo'])->name('my-videos.show');
     
     // Teacher Assessment Upload Route
     Route::post('/videos/{resource}/upload-assessment', [App\Http\Controllers\UserPreferenceController::class, 'uploadAssessment'])->name('videos.upload-assessment');

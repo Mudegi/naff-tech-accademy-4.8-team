@@ -177,7 +177,7 @@
                     </div>
                     
                     <div class="card-footer">
-                        <a href="{{ route('student.my-videos.show', $videoAssignment->resource->hash_id) }}" class="btn btn-primary">
+                        <a href="{{ route('student.my-videos.show', $videoAssignment->resource->id) }}" class="btn btn-primary">
                             <i class="fas fa-eye"></i> View Video & Details
                         </a>
                     </div>
@@ -337,7 +337,7 @@
                         </div>
                         
                         <div class="card-footer">
-                            <a href="{{ route('student.my-videos.show', $videoAssignment->resource->hash_id) }}" class="btn btn-primary">
+                            <a href="{{ route('student.my-videos.show', $videoAssignment->resource->id) }}" class="btn btn-primary">
                                 <i class="fas fa-eye"></i> View Video & Details
                             </a>
                         </div>

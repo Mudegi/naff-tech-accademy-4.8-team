@@ -4,7 +4,7 @@ return [
     'default' => 'main',
     'connections' => [
         'main' => [
-            'salt' => env('HASHIDS_SALT', 'your-unique-app-salt-here'),
+            'salt' => '',
             'length' => 10,
         ],
         'alternative' => [

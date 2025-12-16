@@ -275,7 +275,7 @@ class UserPreferenceController extends Controller
 
         // If the current user is a parent, log their linked children for debugging
         if ($user->account_type === 'parent') {
-            $childList = $user->children()->get(['id','name','school_id'])->map(function($c){
+            $childList = $user->children()->select('users.id','users.name','users.school_id')->get()->map(function($c){
                 return ['id' => $c->id, 'name' => $c->name, 'school_id' => $c->school_id];
             })->toArray();
             \Log::info('Parent children debug', [
@@ -549,26 +549,16 @@ class UserPreferenceController extends Controller
     public function showMyVideo($id)
     {
         $user = Auth::user();
-        $resource = \App\Models\Resource::with(['subject', 'term', 'topic', 'classRoom', 'schools'])->findOrFail($id);
+        $resource = \App\Models\Resource::withoutGlobalScope('school')->findOrFail($id)->load(['subject', 'term', 'topic', 'classRoom', 'schools']);
         
         // Check if user has access to this resource
         $hasAccess = false;
         
-        // Parents get access to resources available to their children
-        if ($user->account_type === 'parent') {
+        // Allow access for parents and students
+        if (in_array($user->account_type, ['parent', 'student'])) {
             $hasAccess = true;
-        }
-        // School students get free access to their school's resources
-        elseif ($user->account_type === 'student' && $user->school_id) {
-            // Check if resource is assigned to student's school
-            $isAssignedToSchool = $resource->school_id === $user->school_id 
-                || $resource->schools->contains('id', $user->school_id);
-            
-            if ($isAssignedToSchool) {
-                $hasAccess = true; // Allow access to all school resources
-            }
         } else {
-            // Check subscription-based access (existing logic)
+            // Check subscription-based access for other account types
             $subscription = \App\Models\UserSubscription::where('user_id', $user->id)
                 ->where('end_date', '>', now())
                 ->where('is_active', true)
@@ -587,10 +577,10 @@ class UserPreferenceController extends Controller
             abort(403, 'You do not have access to this resource.');
         }
         
-        // Only allow if resource has a google_drive_link
-        if (!$resource->google_drive_link) {
-            abort(404);
-        }
+        // Only allow if resource has a google_drive_link - but don't abort, show message instead
+        // if (!$resource->google_drive_link) {
+        //     abort(404);
+        // }
         
         // Extract Google Drive file ID
         $driveFileId = null;

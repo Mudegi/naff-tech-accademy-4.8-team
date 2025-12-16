@@ -220,6 +220,9 @@
                     <a href="<?php echo e(route('parent.child.details', $student->id)); ?>" class="action-btn">
                         <i class="fas fa-chart-bar"></i> Full Report
                     </a>
+                    <a href="<?php echo e(route('parent.children.videos', $student->id)); ?>" class="action-btn">
+                        <i class="fas fa-play-circle"></i> View Videos
+                    </a>
                     <a href="<?php echo e(route('parent.messages.create', ['student_id' => $student->id])); ?>" class="action-btn">
                         <i class="fas fa-comments"></i> Message Teacher
                     </a>
