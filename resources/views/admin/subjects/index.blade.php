@@ -15,6 +15,11 @@
                 <span class="breadcrumb-active">Subjects</span>
             </div>
         </div>
+        @if(!$isSchoolAdmin)
+        <a href="{{ route('admin.subjects.create') }}" class="dashboard-btn dashboard-btn-primary">
+            <i class="fas fa-plus"></i> Create Subject
+        </a>
+        @endif
     </div>
 
     @if (session('success'))

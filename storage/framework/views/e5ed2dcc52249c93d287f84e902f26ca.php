@@ -104,6 +104,10 @@
                         <i class="fas fa-plus-circle"></i>
                         <span>Upload Assignment</span>
                     </a>
+                    <a href="<?php echo e(route('teacher.assigned-videos')); ?>" class="sidebar-item <?php echo e(request()->routeIs('teacher.assigned-videos') ? 'active' : ''); ?>">
+                        <i class="fas fa-video"></i>
+                        <span>Assigned Videos</span>
+                    </a>
                     <?php endif; ?>
 
                     <?php if(!in_array(session('user_type'), ['teacher', 'subject_teacher']) && !Auth::user()->school_id): ?>

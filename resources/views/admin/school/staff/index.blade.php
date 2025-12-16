@@ -216,7 +216,8 @@
             </div>
         </div>
         <div class="table-container-modern">
-            <table class="table-modern">
+            <div class="table-responsive">
+                <table class="table-modern">
                 <thead>
                     <tr>
                         <th>
@@ -369,7 +370,8 @@
                     </tr>
                     @endforelse
                 </tbody>
-            </table>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -616,8 +618,8 @@
 }
 
 .staff-avatar {
-    width: 40px;
-    height: 40px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
     background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
     display: flex;
@@ -625,7 +627,7 @@
     justify-content: center;
     color: white;
     font-weight: 600;
-    font-size: 0.875rem;
+    font-size: 0.75rem;
     flex-shrink: 0;
 }
 
@@ -638,9 +640,9 @@
 .role-badge {
     display: inline-flex;
     align-items: center;
-    padding: 0.5rem 0.75rem;
+    padding: 0.375rem 0.625rem;
     border-radius: 0.5rem;
-    font-size: 0.8125rem;
+    font-size: 0.75rem;
     font-weight: 600;
 }
 
@@ -844,10 +846,10 @@
 }
 
 .table-header-icon {
-    font-size: 1.25rem;
+    font-size: 1rem;
     color: #3b82f6;
-    width: 40px;
-    height: 40px;
+    width: 32px;
+    height: 32px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -856,7 +858,7 @@
 }
 
 .table-header-title {
-    font-size: 1.125rem;
+    font-size: 1rem;
     font-weight: 700;
     color: #1a1a1a;
     margin: 0;
@@ -878,6 +880,7 @@
 .table-modern {
     width: 100%;
     border-collapse: collapse;
+    table-layout: fixed;
 }
 
 .table-modern thead {
@@ -885,7 +888,7 @@
 }
 
 .table-modern th {
-    padding: 1rem 1.5rem;
+    padding: 0.75rem 1rem;
     text-align: left;
     font-size: 0.75rem;
     font-weight: 600;
@@ -894,6 +897,14 @@
     letter-spacing: 0.05em;
     border-bottom: 2px solid #e5e7eb;
 }
+
+.table-modern th:nth-child(1) { width: 18%; }
+.table-modern th:nth-child(2) { width: 22%; }
+.table-modern th:nth-child(3) { width: 12%; }
+.table-modern th:nth-child(4) { width: 15%; }
+.table-modern th:nth-child(5) { width: 15%; }
+.table-modern th:nth-child(6) { width: 10%; }
+.table-modern th:nth-child(7) { width: 8%; }
 
 .table-th-content {
     display: flex;
@@ -911,8 +922,8 @@
 }
 
 .table-modern td {
-    padding: 1.25rem 1.5rem;
-    font-size: 0.875rem;
+    padding: 1rem 1rem;
+    font-size: 0.8125rem;
 }
 
 .table-cell-text {
@@ -925,9 +936,9 @@
 .status-badge-modern {
     display: inline-flex;
     align-items: center;
-    padding: 0.5rem 0.75rem;
+    padding: 0.375rem 0.625rem;
     border-radius: 0.5rem;
-    font-size: 0.8125rem;
+    font-size: 0.75rem;
     font-weight: 600;
 }
 
@@ -949,8 +960,8 @@
 }
 
 .action-btn {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
     border-radius: 0.5rem;
     display: flex;
     align-items: center;
@@ -959,7 +970,7 @@
     border: none;
     cursor: pointer;
     transition: all 0.2s ease;
-    font-size: 0.875rem;
+    font-size: 0.75rem;
 }
 
 .action-edit {

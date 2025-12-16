@@ -4,12 +4,15 @@
 
 @section('content')
 {{-- Remove mobile redirect logic - users with subscriptions should access their videos regardless of device --}}
+@php
+    $videosRoute = in_array(session('user_type'), ['teacher', 'subject_teacher']) ? 'teacher.assigned-videos' : 'student.my-videos';
+@endphp
 <div class="my-videos-container">
     <div class="my-videos-header">
         <h1>@if(in_array(session('user_type'), ['teacher', 'subject_teacher'])) My Created Videos @else My Videos @endif</h1>
     </div>
     <div class="my-videos-filters">
-        <form id="filterForm" action="{{ route('student.my-videos') }}" method="GET">
+        <form id="filterForm" action="{{ route($videosRoute) }}" method="GET">
             @if(in_array(session('user_type'), ['teacher', 'subject_teacher']))
                 <div class="teacher-filters">
                     <label for="filter">Filter Videos</label>
@@ -77,7 +80,7 @@
                 </div>
             </div>
             <div class="my-videos-filters-actions">
-                <a href="{{ route('student.my-videos') }}" class="my-videos-reset">Reset Filters</a>
+                <a href="{{ route($videosRoute) }}" class="my-videos-reset">Reset Filters</a>
             </div>
         </form>
     </div>

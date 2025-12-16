@@ -1,6 +1,6 @@
-@extends('layouts.dashboard')
 
-@section('content')
+
+<?php $__env->startSection('content'); ?>
 <div class="dashboard-content-inner teacher-dashboard">
     <!-- Page Title & Breadcrumbs -->
     <div class="dashboard-breadcrumbs">
@@ -14,29 +14,31 @@
             </div>
         </div>
         <div class="dashboard-actions">
-            <span class="welcome-text">Welcome back, {{ Auth::user()->name }}!</span>
-            <a href="{{ route('teacher.assigned-videos') }}" class="btn btn-primary ml-4">
+            <span class="welcome-text">Welcome back, <?php echo e(Auth::user()->name); ?>!</span>
+            <a href="<?php echo e(route('teacher.assigned-videos')); ?>" class="btn btn-primary ml-4">
                 <i class="fas fa-video"></i> Assigned Videos
             </a>
-            <a href="{{ route('teacher.resources.upload.form') }}" class="btn btn-success ml-4">
+            <a href="<?php echo e(route('teacher.resources.upload.form')); ?>" class="btn btn-success ml-4">
                 <i class="fas fa-upload"></i> Upload Resource
             </a>
         </div>
     </div>
 
-    @if (session('success'))
+    <?php if(session('success')): ?>
         <div class="alert alert-success mb-6 animate-slide-down">
             <i class="fas fa-check-circle mr-2"></i>
-            {{ session('success') }}
-        </div>
-    @endif
+            <?php echo e(session('success')); ?>
 
-    @if (session('error'))
+        </div>
+    <?php endif; ?>
+
+    <?php if(session('error')): ?>
         <div class="alert alert-error mb-6 animate-slide-down">
             <i class="fas fa-exclamation-circle mr-2"></i>
-            {{ session('error') }}
+            <?php echo e(session('error')); ?>
+
         </div>
-    @endif
+    <?php endif; ?>
 
     <!-- Stats Overview -->
     <div class="stats-grid mb-8">
@@ -50,11 +52,11 @@
                 </div>
             </div>
             <div class="stat-card-body">
-                <div class="stat-value-modern">{{ $studentsCount }}</div>
+                <div class="stat-value-modern"><?php echo e($studentsCount); ?></div>
                 <div class="stat-label-modern">My Students</div>
                 <div class="stat-sublabel-modern">Students in your classes</div>
             </div>
-            <a href="{{ route('teacher.marks.index') }}" class="stat-card-link">
+            <a href="<?php echo e(route('teacher.marks.index')); ?>" class="stat-card-link">
                 View All <i class="fas fa-arrow-right"></i>
             </a>
         </div>
@@ -69,11 +71,11 @@
                 </div>
             </div>
             <div class="stat-card-body">
-                <div class="stat-value-modern">{{ $totalResources }}</div>
+                <div class="stat-value-modern"><?php echo e($totalResources); ?></div>
                 <div class="stat-label-modern">My Resources</div>
                 <div class="stat-sublabel-modern">Videos & materials created</div>
             </div>
-            <a href="{{ route('teacher.assessments.index') }}" class="stat-card-link">
+            <a href="<?php echo e(route('teacher.assessments.index')); ?>" class="stat-card-link">
                 Manage Resources <i class="fas fa-arrow-right"></i>
             </a>
         </div>
@@ -84,19 +86,19 @@
                     <i class="fas fa-clipboard-list"></i>
                 </div>
                 <div class="stat-trend">
-                    @if($pendingAssignments > 0)
-                        <span class="badge badge-warning-bright">{{ $pendingAssignments }}</span>
-                    @endif
+                    <?php if($pendingAssignments > 0): ?>
+                        <span class="badge badge-warning-bright"><?php echo e($pendingAssignments); ?></span>
+                    <?php endif; ?>
                 </div>
             </div>
             <div class="stat-card-body">
-                <div class="stat-value-modern">{{ $totalAssignments }}</div>
+                <div class="stat-value-modern"><?php echo e($totalAssignments); ?></div>
                 <div class="stat-label-modern">Total Assignments</div>
                 <div class="stat-sublabel-modern">
-                    <span class="stat-badge-warning">{{ $pendingAssignments }} pending review</span>
+                    <span class="stat-badge-warning"><?php echo e($pendingAssignments); ?> pending review</span>
                 </div>
             </div>
-            <a href="{{ route('teacher.assignments.index') }}" class="stat-card-link">
+            <a href="<?php echo e(route('teacher.assignments.index')); ?>" class="stat-card-link">
                 Review Assignments <i class="fas fa-arrow-right"></i>
             </a>
         </div>
@@ -111,11 +113,11 @@
                 </div>
             </div>
             <div class="stat-card-body">
-                <div class="stat-value-modern">{{ $totalMarksUploaded }}</div>
+                <div class="stat-value-modern"><?php echo e($totalMarksUploaded); ?></div>
                 <div class="stat-label-modern">Marks Uploaded</div>
                 <div class="stat-sublabel-modern">Student marks entered</div>
             </div>
-            <a href="{{ route('teacher.marks.index') }}" class="stat-card-link">
+            <a href="<?php echo e(route('teacher.marks.index')); ?>" class="stat-card-link">
                 Manage Marks <i class="fas fa-arrow-right"></i>
             </a>
         </div>
@@ -134,7 +136,7 @@
                 <div class="stat-label-modern">Parent Messages</div>
                 <div class="stat-sublabel-modern">Messages from parents</div>
             </div>
-            <a href="{{ route('teacher.messages.index') }}" class="stat-card-link">
+            <a href="<?php echo e(route('teacher.messages.index')); ?>" class="stat-card-link">
                 View Messages <i class="fas fa-arrow-right"></i>
             </a>
         </div>
@@ -151,7 +153,7 @@
             </div>
         </div>
         <div class="quick-actions-grid">
-            <a href="{{ route('teacher.assessments.create') }}" class="quick-action-card">
+            <a href="<?php echo e(route('teacher.assessments.create')); ?>" class="quick-action-card">
                 <div class="quick-action-icon quick-action-icon-blue">
                     <i class="fas fa-plus-circle"></i>
                 </div>
@@ -164,7 +166,7 @@
                 </div>
             </a>
 
-            <a href="{{ route('teacher.marks.create') }}" class="quick-action-card">
+            <a href="<?php echo e(route('teacher.marks.create')); ?>" class="quick-action-card">
                 <div class="quick-action-icon quick-action-icon-green">
                     <i class="fas fa-upload"></i>
                 </div>
@@ -177,18 +179,18 @@
                 </div>
             </a>
 
-            <a href="{{ route('teacher.assignments.index') }}" class="quick-action-card">
+            <a href="<?php echo e(route('teacher.assignments.index')); ?>" class="quick-action-card">
                 <div class="quick-action-icon quick-action-icon-orange">
                     <i class="fas fa-check-circle"></i>
                 </div>
                 <div class="quick-action-content">
                     <div class="quick-action-title">Review Assignments</div>
                     <div class="quick-action-desc">
-                        @if($pendingAssignments > 0)
-                            <span class="badge-count">{{ $pendingAssignments }} pending</span>
-                        @else
+                        <?php if($pendingAssignments > 0): ?>
+                            <span class="badge-count"><?php echo e($pendingAssignments); ?> pending</span>
+                        <?php else: ?>
                             No pending assignments
-                        @endif
+                        <?php endif; ?>
                     </div>
                 </div>
                 <div class="quick-action-arrow">
@@ -196,7 +198,7 @@
                 </div>
             </a>
 
-            <a href="{{ route('teacher.messages.index') }}" class="quick-action-card">
+            <a href="<?php echo e(route('teacher.messages.index')); ?>" class="quick-action-card">
                 <div class="quick-action-icon quick-action-icon-purple">
                     <i class="fas fa-envelope"></i>
                 </div>
@@ -209,18 +211,18 @@
                 </div>
             </a>
 
-            <a href="{{ route('teacher.assessments.index') }}" class="quick-action-card">
+            <a href="<?php echo e(route('teacher.assessments.index')); ?>" class="quick-action-card">
                 <div class="quick-action-icon quick-action-icon-teal">
                     <i class="fas fa-book"></i>
                 </div>
                 <div class="quick-action-content">
                     <div class="quick-action-title">View Comments</div>
                     <div class="quick-action-desc">
-                        @if($unrepliedCommentsCount > 0)
-                            <span class="badge-count">{{ $unrepliedCommentsCount }} unreplied</span>
-                        @else
+                        <?php if($unrepliedCommentsCount > 0): ?>
+                            <span class="badge-count"><?php echo e($unrepliedCommentsCount); ?> unreplied</span>
+                        <?php else: ?>
                             All comments replied
-                        @endif
+                        <?php endif; ?>
                     </div>
                 </div>
                 <div class="quick-action-arrow">
@@ -244,37 +246,38 @@
                         <p class="card-subtitle-modern">Latest student submissions</p>
                     </div>
                 </div>
-                <a href="{{ route('teacher.assignments.index') }}" class="card-header-link">
+                <a href="<?php echo e(route('teacher.assignments.index')); ?>" class="card-header-link">
                     View All <i class="fas fa-arrow-right ml-1"></i>
                 </a>
             </div>
             <div class="card-body-modern">
-                @if($recentAssignments->count() > 0)
+                <?php if($recentAssignments->count() > 0): ?>
                     <div class="activity-list">
-                        @foreach($recentAssignments as $assignment)
+                        <?php $__currentLoopData = $recentAssignments; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $assignment): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                             <div class="activity-item-modern">
-                                <div class="activity-avatar activity-avatar-{{ $assignment->status === 'graded' ? 'success' : ($assignment->status === 'submitted' ? 'warning' : 'info') }}">
+                                <div class="activity-avatar activity-avatar-<?php echo e($assignment->status === 'graded' ? 'success' : ($assignment->status === 'submitted' ? 'warning' : 'info')); ?>">
                                     <i class="fas fa-file-alt"></i>
                                 </div>
                                 <div class="activity-content-modern">
                                     <div class="activity-header">
-                                        <h4 class="activity-title-modern">{{ $assignment->user->name ?? 'Unknown Student' }}</h4>
-                                        <span class="activity-time-modern">{{ $assignment->created_at->diffForHumans() }}</span>
+                                        <h4 class="activity-title-modern"><?php echo e($assignment->user->name ?? 'Unknown Student'); ?></h4>
+                                        <span class="activity-time-modern"><?php echo e($assignment->created_at->diffForHumans()); ?></span>
                                     </div>
-                                    <p class="activity-desc-modern">{{ $assignment->resource->title ?? 'N/A' }}</p>
+                                    <p class="activity-desc-modern"><?php echo e($assignment->resource->title ?? 'N/A'); ?></p>
                                     <div class="activity-footer">
-                                        <span class="status-badge status-badge-{{ $assignment->status === 'graded' ? 'success' : ($assignment->status === 'submitted' ? 'warning' : 'info') }}">
-                                            {{ ucfirst($assignment->status) }}
+                                        <span class="status-badge status-badge-<?php echo e($assignment->status === 'graded' ? 'success' : ($assignment->status === 'submitted' ? 'warning' : 'info')); ?>">
+                                            <?php echo e(ucfirst($assignment->status)); ?>
+
                                         </span>
-                                        @if($assignment->grade)
-                                            <span class="grade-badge">Grade: {{ $assignment->grade }}</span>
-                                        @endif
+                                        <?php if($assignment->grade): ?>
+                                            <span class="grade-badge">Grade: <?php echo e($assignment->grade); ?></span>
+                                        <?php endif; ?>
                                     </div>
                                 </div>
                             </div>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </div>
-                @else
+                <?php else: ?>
                     <div class="empty-state">
                         <div class="empty-state-icon">
                             <i class="fas fa-inbox"></i>
@@ -282,7 +285,7 @@
                         <h3 class="empty-state-title">No assignments yet</h3>
                         <p class="empty-state-desc">Student assignments will appear here once submitted.</p>
                     </div>
-                @endif
+                <?php endif; ?>
             </div>
         </div>
 
@@ -298,35 +301,35 @@
                         <p class="card-subtitle-modern">Latest marks entries</p>
                     </div>
                 </div>
-                <a href="{{ route('teacher.marks.index') }}" class="card-header-link">
+                <a href="<?php echo e(route('teacher.marks.index')); ?>" class="card-header-link">
                     View All <i class="fas fa-arrow-right ml-1"></i>
                 </a>
             </div>
             <div class="card-body-modern">
-                @if($recentMarks->count() > 0)
+                <?php if($recentMarks->count() > 0): ?>
                     <div class="activity-list">
-                        @foreach($recentMarks as $mark)
+                        <?php $__currentLoopData = $recentMarks; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $mark): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                             <div class="activity-item-modern">
                                 <div class="activity-avatar activity-avatar-success">
                                     <i class="fas fa-check"></i>
                                 </div>
                                 <div class="activity-content-modern">
                                     <div class="activity-header">
-                                        <h4 class="activity-title-modern">{{ $mark->user->name ?? 'Unknown Student' }}</h4>
-                                        <span class="activity-time-modern">{{ $mark->created_at->diffForHumans() }}</span>
+                                        <h4 class="activity-title-modern"><?php echo e($mark->user->name ?? 'Unknown Student'); ?></h4>
+                                        <span class="activity-time-modern"><?php echo e($mark->created_at->diffForHumans()); ?></span>
                                     </div>
-                                    <p class="activity-desc-modern">{{ $mark->subject_name }} - Grade: <strong>{{ $mark->grade }}</strong></p>
+                                    <p class="activity-desc-modern"><?php echo e($mark->subject_name); ?> - Grade: <strong><?php echo e($mark->grade); ?></strong></p>
                                     <div class="activity-footer">
-                                        <span class="status-badge status-badge-info">{{ $mark->academic_level }}</span>
-                                        @if($mark->points)
-                                            <span class="grade-badge">Points: {{ $mark->points }}</span>
-                                        @endif
+                                        <span class="status-badge status-badge-info"><?php echo e($mark->academic_level); ?></span>
+                                        <?php if($mark->points): ?>
+                                            <span class="grade-badge">Points: <?php echo e($mark->points); ?></span>
+                                        <?php endif; ?>
                                     </div>
                                 </div>
                             </div>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </div>
-                @else
+                <?php else: ?>
                     <div class="empty-state">
                         <div class="empty-state-icon">
                             <i class="fas fa-inbox"></i>
@@ -334,13 +337,13 @@
                         <h3 class="empty-state-title">No marks uploaded yet</h3>
                         <p class="empty-state-desc">Upload student marks to see them here.</p>
                     </div>
-                @endif
+                <?php endif; ?>
             </div>
         </div>
     </div>
 
     <!-- My Classes -->
-    @if($classes->count() > 0)
+    <?php if($classes->count() > 0): ?>
     <div class="dashboard-card-modern">
         <div class="card-header-modern">
             <div class="card-header-left">
@@ -349,34 +352,34 @@
                 </div>
                 <div>
                     <h2 class="card-title-modern">My Classes</h2>
-                    <p class="card-subtitle-modern">{{ $classes->count() }} class{{ $classes->count() !== 1 ? 'es' : '' }} assigned</p>
+                    <p class="card-subtitle-modern"><?php echo e($classes->count()); ?> class<?php echo e($classes->count() !== 1 ? 'es' : ''); ?> assigned</p>
                 </div>
             </div>
         </div>
         <div class="card-body-modern">
             <div class="classes-grid">
-                @foreach($classes as $class)
+                <?php $__currentLoopData = $classes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $class): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                     <div class="class-card-modern">
                         <div class="class-card-header">
                             <div class="class-icon-modern">
                                 <i class="fas fa-users"></i>
                             </div>
                             <div class="class-info-modern">
-                                <h3 class="class-name-modern">{{ $class->name }}</h3>
-                                <p class="class-level-modern">{{ $class->grade_level ?? 'N/A' }}</p>
+                                <h3 class="class-name-modern"><?php echo e($class->name); ?></h3>
+                                <p class="class-level-modern"><?php echo e($class->grade_level ?? 'N/A'); ?></p>
                             </div>
                         </div>
                         <div class="class-card-footer">
-                            <a href="{{ route('teacher.marks.create', ['class_id' => $class->id]) }}" class="class-action-btn-modern">
+                            <a href="<?php echo e(route('teacher.marks.create', ['class_id' => $class->id])); ?>" class="class-action-btn-modern">
                                 <i class="fas fa-upload mr-2"></i> Upload Marks
                             </a>
                         </div>
                     </div>
-                @endforeach
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
             </div>
         </div>
     </div>
-    @else
+    <?php else: ?>
     <div class="dashboard-card-modern">
         <div class="empty-state">
             <div class="empty-state-icon">
@@ -386,7 +389,7 @@
             <p class="empty-state-desc">Contact your administrator to be assigned to classes.</p>
         </div>
     </div>
-    @endif
+    <?php endif; ?>
 </div>
 
 <style>
@@ -993,7 +996,7 @@
 <script>
 // Load unread message count
 document.addEventListener('DOMContentLoaded', function() {
-    fetch('{{ route("teacher.messages.unread-count") }}')
+    fetch('<?php echo e(route("teacher.messages.unread-count")); ?>')
         .then(response => response.json())
         .then(data => {
             const unreadCount = data.unread_count || 0;
@@ -1018,4 +1021,6 @@ document.addEventListener('DOMContentLoaded', function() {
         .catch(error => console.error('Error loading message count:', error));
 });
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.dashboard', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Users\user\Desktop\naff-tech-accademy-4.8-team\resources\views/teacher/dashboard.blade.php ENDPATH**/ ?>

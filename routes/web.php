@@ -332,6 +332,7 @@ Route::middleware(['auth', 'single.session', \App\Http\Middleware\CheckAccountTy
     Route::post('/standalone-assignments/{assignment}/submissions/{submission}/grade', [App\Http\Controllers\Teacher\StandaloneAssignmentController::class, 'gradeSubmission'])->name('standalone-assignments.grade-submission');
     Route::get('/standalone-assignments/{assignment}/submissions/{submission}/download', [App\Http\Controllers\Teacher\StandaloneAssignmentController::class, 'downloadSubmission'])->name('standalone-assignments.download-submission');
     Route::get('/dashboard', [App\Http\Controllers\Teacher\DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/assigned-videos', [App\Http\Controllers\Teacher\DashboardController::class, 'assignedVideos'])->name('assigned-videos');
     
     // Teacher Assignment Management Routes
     Route::get('/assignments', [App\Http\Controllers\AssignmentController::class, 'index'])->name('assignments.index');

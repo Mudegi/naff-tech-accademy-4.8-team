@@ -126,5 +126,90 @@ class DashboardController extends Controller
             'unrepliedCommentsCount'
         ));
     }
+
+    /**
+     * Display assigned videos for the teacher.
+     */
+    public function assignedVideos(Request $request)
+    {
+        $user = Auth::user();
+        
+        // Check if user is a teacher
+        if (!in_array($user->account_type, ['teacher', 'subject_teacher'])) {
+            abort(403, 'Access denied. Only teachers can access this page.');
+        }
+
+        \Log::info('Teacher assigned videos debug', [
+            'teacher_id' => $user->id,
+            'teacher_name' => $user->name,
+            'school_id' => $user->school_id,
+            'account_type' => $user->account_type
+        ]);
+
+        // Get videos assigned to this teacher (by school, not teacher_id)
+        $query = Resource::withoutGlobalScope('school')
+            ->with(['subject', 'term', 'topic', 'classRoom', 'schools'])
+            ->where(function($q) use ($user) {
+                $q->where('school_id', $user->school_id)
+                  ->orWhereHas('schools', function($sq) use ($user) {
+                      $sq->where('schools.id', $user->school_id);
+                  });
+            })
+            ->where('is_active', true)
+            ->whereNotNull('google_drive_link')
+            ->where('google_drive_link', '!=', '');
+
+        $totalCount = $query->count();
+        \Log::info('Total resources for school', ['school_id' => $user->school_id, 'count' => $totalCount]);
+
+        // Apply filters
+        if ($request->filled('subject_id')) {
+            $query->where('subject_id', $request->subject_id);
+        }
+        if ($request->filled('topic_id')) {
+            $query->where('topic_id', $request->topic_id);
+        }
+        if ($request->filled('term_id')) {
+            $query->where('term_id', $request->term_id);
+        }
+        if ($request->filled('search')) {
+            $query->where(function($q) use ($request) {
+                $q->where('title', 'like', '%' . $request->search . '%')
+                  ->orWhere('description', 'like', '%' . $request->search . '%');
+            });
+        }
+
+        $resources = $query->latest()->paginate(12);
+        $resources->appends($request->query());
+
+        // Get filter options based on all school resources
+        $schoolResourceQuery = Resource::withoutGlobalScope('school')
+            ->where(function($q) use ($user) {
+                $q->where('school_id', $user->school_id)
+                  ->orWhereHas('schools', function($sq) use ($user) {
+                      $sq->where('schools.id', $user->school_id);
+                  });
+            })
+            ->where('is_active', true)
+            ->whereNotNull('google_drive_link')
+            ->where('google_drive_link', '!=', '');
+
+        $subjects = \App\Models\Subject::whereIn('id', 
+            $schoolResourceQuery->clone()->pluck('subject_id')->unique()->filter()
+        )->get();
+
+        $topics = \App\Models\Topic::whereIn('id',
+            $schoolResourceQuery->clone()->pluck('topic_id')->unique()->filter()
+        )->get();
+
+        $terms = \App\Models\Term::whereIn('id',
+            $schoolResourceQuery->clone()->pluck('term_id')->unique()->filter()
+        )->get();
+
+        $classes = collect();
+        $isSchoolStudent = false; // For teachers
+
+        return view('student.my-videos', compact('resources', 'classes', 'subjects', 'topics', 'terms', 'isSchoolStudent'));
+    }
 }
 

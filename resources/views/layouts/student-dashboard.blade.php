@@ -132,6 +132,10 @@
                         <i class="fas fa-plus-circle"></i>
                         <span>Upload Assignment</span>
                     </a>
+                    <a href="{{ route('teacher.assigned-videos') }}" class="sidebar-item {{ request()->routeIs('teacher.assigned-videos') ? 'active' : '' }}">
+                        <i class="fas fa-video"></i>
+                        <span>Assigned Videos</span>
+                    </a>
                     @endif
 
                     @if(!in_array(session('user_type'), ['teacher', 'subject_teacher']) && !Auth::user()->school_id)

@@ -67,6 +67,9 @@ class CheckAccountType
                     
                 case 'teacher':
                 case 'subject_teacher':
+                    // Set user type in session
+                    session(['user_type' => $user->account_type]);
+                    
                     // Teachers and subject teachers use teacher routes
                     // But also allow access to student routes for projects and groups
                     $route = $request->route();

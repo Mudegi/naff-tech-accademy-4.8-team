@@ -2,12 +2,15 @@
 
 <?php $__env->startSection('content'); ?>
 
+<?php
+    $videosRoute = in_array(session('user_type'), ['teacher', 'subject_teacher']) ? 'teacher.assigned-videos' : 'student.my-videos';
+?>
 <div class="my-videos-container">
     <div class="my-videos-header">
         <h1><?php if(in_array(session('user_type'), ['teacher', 'subject_teacher'])): ?> My Created Videos <?php else: ?> My Videos <?php endif; ?></h1>
     </div>
     <div class="my-videos-filters">
-        <form id="filterForm" action="<?php echo e(route('student.my-videos')); ?>" method="GET">
+        <form id="filterForm" action="<?php echo e(route($videosRoute)); ?>" method="GET">
             <?php if(in_array(session('user_type'), ['teacher', 'subject_teacher'])): ?>
                 <div class="teacher-filters">
                     <label for="filter">Filter Videos</label>
@@ -75,7 +78,7 @@
                 </div>
             </div>
             <div class="my-videos-filters-actions">
-                <a href="<?php echo e(route('student.my-videos')); ?>" class="my-videos-reset">Reset Filters</a>
+                <a href="<?php echo e(route($videosRoute)); ?>" class="my-videos-reset">Reset Filters</a>
             </div>
         </form>
     </div>
