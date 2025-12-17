@@ -54,7 +54,7 @@ class StandaloneAssignmentController extends Controller
         
         // Get filter options
         $subjects = Subject::where('school_id', $user->school_id)->orWhereNull('school_id')->get();
-        $classes = SchoolClass::whereNull('school_id')->get();
+        $classes = SchoolClass::where('school_id', $user->school_id)->orWhereNull('school_id')->get();
         $terms = Term::all();
         
         return view('teacher.standalone-assignments.index', compact('assignments', 'subjects', 'classes', 'terms'));
@@ -76,6 +76,10 @@ class StandaloneAssignmentController extends Controller
         if (!empty($subjectIds)) {
             $subjects = Subject::withoutGlobalScope('school')
                 ->whereIn('id', $subjectIds)
+                ->where(function($q) use ($user) {
+                    $q->where('school_id', $user->school_id)
+                      ->orWhereNull('school_id');
+                })
                 ->get();
         } else {
             // If no subjects assigned, get all school subjects as fallback
@@ -91,6 +95,10 @@ class StandaloneAssignmentController extends Controller
         if (!empty($classIds)) {
             $classes = SchoolClass::withoutGlobalScope('school')
                 ->whereIn('id', $classIds)
+                ->where(function($q) use ($user) {
+                    $q->where('school_id', $user->school_id)
+                      ->orWhereNull('school_id');
+                })
                 ->get();
         } else {
             // If no classes assigned, get all school classes as fallback

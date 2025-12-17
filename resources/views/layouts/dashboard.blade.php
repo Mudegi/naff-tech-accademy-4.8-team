@@ -131,7 +131,7 @@
                 @endif
                 @if((in_array('view_subject', $userPermissions) || in_array('view_topic', $userPermissions) || in_array('view_class', $userPermissions)))
                     <div class="sidebar-dropdown">
-                        <button class="sidebar-dropdown-btn {{ request()->routeIs('admin.subjects.*') || request()->routeIs('admin.topics.*') || request()->routeIs('admin.classes.*') ? 'active' : '' }}">
+                        <button class="sidebar-dropdown-btn {{ request()->routeIs('admin.subjects.*') || request()->routeIs('admin.topics.*') || request()->routeIs('admin.classes.*') ? 'active' : '' }}" type="button">
                             📚 Academic Settings
                             <i class="fas fa-chevron-down"></i>
                         </button>
@@ -165,7 +165,7 @@
                 <!-- Assignment Management - Only for School Admin, Director of Studies, and Head of Departments -->
                 @if(in_array($user->account_type, ['school_admin', 'director_of_studies', 'head_of_department']))
                     <div class="sidebar-dropdown">
-                        <button class="sidebar-dropdown-btn {{ request()->routeIs('admin.assignments.*') || request()->routeIs('admin.teacher-assignments.*') || request()->routeIs('student.assignments.*') ? 'active' : '' }}">
+                        <button class="sidebar-dropdown-btn {{ request()->routeIs('admin.assignments.*') || request()->routeIs('admin.teacher-assignments.*') || request()->routeIs('student.assignments.*') ? 'active' : '' }}" type="button">
                             📋 Assignment Management
                             <i class="fas fa-chevron-down"></i>
                         </button>
@@ -204,7 +204,7 @@
                         <i class="fas fa-check-circle"></i> Review Assignments
                     </a>
                     <!-- Groups -->
-                    <a href="{{ route('teacher.groups.index') }}" class="sidebar-link {{ request()->routeIs('teacher.groups.*') ? 'active' : '' }}">
+                    <a href="{{ route('teacher.projects.groups.index') }}" class="sidebar-link {{ request()->routeIs('teacher.projects.groups.*') ? 'active' : '' }}">
                         <i class="fas fa-users"></i> Groups
                     </a>
                     <!-- Projects -->
@@ -218,7 +218,7 @@
                 
                 @if((in_array('view_roles', $userPermissions) || in_array('view_permissions', $userPermissions) || $isSuperAdmin))
                     <div class="sidebar-dropdown">
-                        <button class="sidebar-dropdown-btn {{ request()->routeIs('admin.roles.*') || request()->routeIs('admin.permissions.*') || request()->routeIs('admin.users.*') ? 'active' : '' }}">
+                        <button class="sidebar-dropdown-btn {{ request()->routeIs('admin.roles.*') || request()->routeIs('admin.permissions.*') || request()->routeIs('admin.users.*') ? 'active' : '' }}" type="button">
                             🛡️ Roles & Permissions
                             <i class="fas fa-chevron-down"></i>
                         </button>
@@ -258,7 +258,7 @@
                 @endif
                 @if(in_array('view_settings', $userPermissions) || $isSuperAdmin)
                     <div class="sidebar-dropdown">
-                        <button class="sidebar-dropdown-btn {{ request()->routeIs('admin.settings.*') ? 'active' : '' }}">
+                        <button class="sidebar-dropdown-btn {{ request()->routeIs('admin.settings.*') ? 'active' : '' }}" type="button">
                             ⚙️ Settings
                             <i class="fas fa-chevron-down"></i>
                         </button>
