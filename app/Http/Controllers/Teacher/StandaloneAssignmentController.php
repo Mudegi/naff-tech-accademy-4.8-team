@@ -14,6 +14,7 @@ use App\Models\Notification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 
 class StandaloneAssignmentController extends Controller
 {
@@ -66,11 +67,35 @@ class StandaloneAssignmentController extends Controller
     {
         $user = Auth::user();
         
-        // Only show subjects that the teacher teaches
-        $subjects = $user->subjects()->get();
+        // Get subjects assigned to teacher
+        $subjectIds = DB::table('subject_user')
+            ->where('user_id', $user->id)
+            ->pluck('subject_id')
+            ->toArray();
         
-        // Get classes assigned to this teacher
-        $classes = $user->classes()->get();
+        if (!empty($subjectIds)) {
+            $subjects = Subject::withoutGlobalScope('school')
+                ->whereIn('id', $subjectIds)
+                ->get();
+        } else {
+            // If no subjects assigned, get all school subjects as fallback
+            $subjects = Subject::where('school_id', $user->school_id)->get();
+        }
+        
+        // Get classes assigned to teacher
+        $classIds = DB::table('class_user')
+            ->where('user_id', $user->id)
+            ->pluck('class_id')
+            ->toArray();
+        
+        if (!empty($classIds)) {
+            $classes = SchoolClass::withoutGlobalScope('school')
+                ->whereIn('id', $classIds)
+                ->get();
+        } else {
+            // If no classes assigned, get all school classes as fallback
+            $classes = SchoolClass::where('school_id', $user->school_id)->get();
+        }
         
         $terms = Term::all();
         $topics = Topic::where('school_id', $user->school_id)->orWhereNull('school_id')->get();
