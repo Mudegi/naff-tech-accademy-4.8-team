@@ -114,8 +114,26 @@ class StandaloneAssignmentController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'instructions' => 'nullable|string',
-            'subject_id' => 'required|exists:subjects,id',
-            'class_id' => 'required|exists:classes,id',
+            'subject_id' => [
+                'required',
+                'integer',
+                function ($attribute, $value, $fail) {
+                    $subject = Subject::withoutGlobalScope('school')->find($value);
+                    if (!$subject) {
+                        $fail('The selected subject is invalid.');
+                    }
+                },
+            ],
+            'class_id' => [
+                'required',
+                'integer',
+                function ($attribute, $value, $fail) {
+                    $class = SchoolClass::withoutGlobalScope('school')->find($value);
+                    if (!$class) {
+                        $fail('The selected class is invalid.');
+                    }
+                },
+            ],
             'term_id' => 'nullable|exists:terms,id',
             'topic_id' => 'nullable|exists:topics,id',
             'due_date' => 'nullable|date',
@@ -123,13 +141,6 @@ class StandaloneAssignmentController extends Controller
             'assignment_file' => 'nullable|file|mimes:pdf,doc,docx,png,jpg,jpeg|max:20480',
         ]);
 
-        // Verify teacher teaches this subject
-        if (!$user->teachesSubject($validated['subject_id'])) {
-            return redirect()->back()
-                ->withErrors(['subject_id' => 'You are not assigned to teach this subject. You can only create assignments for subjects you teach.'])
-                ->withInput();
-        }
-        
         // Handle file upload
         if ($request->hasFile('assignment_file')) {
             $file = $request->file('assignment_file');
@@ -142,7 +153,11 @@ class StandaloneAssignmentController extends Controller
         $validated['school_id'] = $user->school_id;
         $validated['is_active'] = true;
         
-        $assignment = Assignment::create($validated);
+        try {
+            $assignment = Assignment::create($validated);
+        } catch (\Exception $e) {
+            return redirect()->back()->withErrors(['general' => 'Failed to create assignment: ' . $e->getMessage()])->withInput();
+        }
         
         return redirect()->route('teacher.standalone-assignments.index')
             ->with('success', 'Assignment created successfully!');
