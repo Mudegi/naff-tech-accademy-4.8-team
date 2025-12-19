@@ -43,7 +43,7 @@
                     </div>
                     <div class="notification-actions">
                         @if(in_array($notification->type, ['assignment_submitted', 'assignment_graded', 'assignment_feedback', 'assignment_status_updated', 'assignment_reviewed']))
-                            <a href="{{ route('student.my-assignments.index') }}" class="view-video-btn">
+                            <a href="{{ route('student.assignments.index') }}" class="view-video-btn">
                                 <i class="fas fa-clipboard-check"></i> View My Assignments
                             </a>
                         @elseif($notification->type === 'course_recommendation')

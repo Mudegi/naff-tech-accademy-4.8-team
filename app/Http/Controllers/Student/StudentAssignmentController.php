@@ -19,11 +19,15 @@ class StudentAssignmentController extends Controller
     {
         $user = Auth::user();
         
-        // Get student's class IDs
+        // Get student's class IDs (pivot) and fallback to student.profile class_id
         $classIds = DB::table('class_user')
             ->where('user_id', $user->id)
             ->pluck('class_id')
             ->toArray();
+        if (empty($classIds)) {
+            $fallbackClassId = optional($user->student)->class_id;
+            $classIds = $fallbackClassId ? [$fallbackClassId] : [];
+        }
         
         if (empty($classIds)) {
             $assignments = collect();
@@ -65,11 +69,15 @@ class StudentAssignmentController extends Controller
     {
         $user = Auth::user();
         
-        // Get student's class IDs
+        // Get student's class IDs (pivot) and fallback to student.profile class_id
         $classIds = DB::table('class_user')
             ->where('user_id', $user->id)
             ->pluck('class_id')
             ->toArray();
+        if (empty($classIds)) {
+            $fallbackClassId = optional($user->student)->class_id;
+            $classIds = $fallbackClassId ? [$fallbackClassId] : [];
+        }
         
         $assignment = Assignment::with(['subject', 'classRoom', 'term', 'teacher', 'topic'])
             ->where('school_id', $user->school_id)
@@ -92,11 +100,15 @@ class StudentAssignmentController extends Controller
     {
         $user = Auth::user();
         
-        // Get student's class IDs
+        // Get student's class IDs (pivot) and fallback to student.profile class_id
         $classIds = DB::table('class_user')
             ->where('user_id', $user->id)
             ->pluck('class_id')
             ->toArray();
+        if (empty($classIds)) {
+            $fallbackClassId = optional($user->student)->class_id;
+            $classIds = $fallbackClassId ? [$fallbackClassId] : [];
+        }
         
         $assignment = Assignment::where('school_id', $user->school_id)
             ->whereIn('class_id', $classIds)
@@ -165,11 +177,15 @@ class StudentAssignmentController extends Controller
     {
         $user = Auth::user();
         
-        // Get student's class IDs
+        // Get student's class IDs (pivot) and fallback to student.profile class_id
         $classIds = DB::table('class_user')
             ->where('user_id', $user->id)
             ->pluck('class_id')
             ->toArray();
+        if (empty($classIds)) {
+            $fallbackClassId = optional($user->student)->class_id;
+            $classIds = $fallbackClassId ? [$fallbackClassId] : [];
+        }
         
         $assignment = Assignment::where('school_id', $user->school_id)
             ->whereIn('class_id', $classIds)
